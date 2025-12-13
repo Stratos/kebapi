@@ -1,0 +1,478 @@
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const express = require('express');
+const inquirer = require('inquirer');
+const chalk = require('chalk');
+const Table = require('cli-table3');
+const boxen = require('boxen');
+const gradient = require('gradient-string');
+const figlet = require('figlet');
+const ora = require('ora');
+const fs = require('fs-extra');
+const path = require('path');
+
+const GEMINI_API_KEY = 'AIzaSyA9Nc7b8L8-B1sTlJR4jPQLZkP5oMdPoLY';
+const PORT = process.env.PORT || 3000;
+const DB_FILE = path.join(__dirname, 'kebapi-db.json');
+
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+const endpoints = new Map();
+const app = express();
+app.use(express.json());
+
+// ═══════════════════════════════════════════════════════════
+// 💾 FUNCIONES DE PERSISTENCIA
+// ═══════════════════════════════════════════════════════════
+
+async function cargarEndpoints() {
+  try {
+    if (await fs.pathExists(DB_FILE)) {
+      const data = await fs.readJson(DB_FILE);
+      data.forEach(ep => {
+        endpoints.set(ep.id, ep);
+        
+        // Registrar ruta en Express
+        const fullPath = '/api' + ep.path;
+        app[ep.method.toLowerCase()](fullPath, (req, res) => {
+          res.json(ep.responseData);
+        });
+      });
+      return endpoints.size;
+    }
+  } catch (error) {
+    console.error(chalk.red('Error cargando endpoints:', error.message));
+  }
+  return 0;
+}
+
+async function guardarEndpoints() {
+  try {
+    const data = Array.from(endpoints.values());
+    await fs.writeJson(DB_FILE, data, { spaces: 2 });
+    return true;
+  } catch (error) {
+    console.error(chalk.red('Error guardando endpoints:', error.message));
+    return false;
+  }
+}
+
+function mostrarBanner() {
+  console.clear();
+  const banner = figlet.textSync('KEBAPI', {
+    font: 'ANSI Shadow',
+    horizontalLayout: 'fitted'
+  });
+  console.log(gradient.pastel.multiline(banner));
+  console.log(chalk.cyan.bold('                  🌯 Generador de APIs REST con IA\n'));
+  console.log(chalk.gray('                  Servidor: ') + chalk.green(`http://localhost:${PORT}\n`));
+}
+
+async function generarEndpoint() {
+  console.clear();
+  mostrarBanner();
+  
+  const { prompt } = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'prompt',
+      message: chalk.yellow('🌯 Describe el endpoint que quieres crear:'),
+      validate: (input) => input.length >= 10 || chalk.red('Mínimo 10 caracteres')
+    }
+  ]);
+
+  const spinner = ora({
+    text: chalk.cyan('Cocinando tu endpoint con IA...'),
+    color: 'cyan',
+    spinner: 'dots'
+  }).start();
+  
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    
+    const aiPrompt = 'Crea un endpoint REST API en JSON para: ' + prompt + '. Formato: {"path": "/nombre", "method": "GET", "description": "...", "responseData": {"success": true, "data": [3 objetos con datos reales], "total": 3}}. Solo JSON, sin markdown.';
+
+    const result = await model.generateContent(aiPrompt);
+    const text = result.response.text();
+    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    const endpoint = JSON.parse(cleanText);
+    
+    if (!endpoint.path.startsWith('/')) {
+      endpoint.path = '/' + endpoint.path;
+    }
+    
+    const id = Date.now().toString();
+    const endpointCompleto = {
+      id,
+      ...endpoint,
+      createdAt: new Date().toISOString(),
+      originalPrompt: prompt
+    };
+    
+    endpoints.set(id, endpointCompleto);
+    
+    // Guardar en archivo
+    await guardarEndpoints();
+    
+    const fullPath = '/api' + endpoint.path;
+    app[endpoint.method.toLowerCase()](fullPath, (req, res) => {
+      res.json(endpoint.responseData);
+    });
+    
+    spinner.succeed(chalk.green.bold('✅ ¡Endpoint creado y guardado!'));
+    
+    console.log('\n' + boxen(
+      chalk.bold.white('🏷️  Método: ') + chalk.cyan(endpoint.method) + '\n' +
+      chalk.bold.white('📍 Ruta: ') + chalk.yellow(fullPath) + '\n' +
+      chalk.bold.white('📝 Descripción: ') + chalk.gray(endpoint.description) + '\n' +
+      chalk.bold.white('🔗 URL: ') + chalk.blue.underline(`http://localhost:${PORT}${fullPath}`) + '\n' +
+      chalk.bold.white('💾 Estado: ') + chalk.green('Guardado en disco'),
+      {
+        padding: 1,
+        margin: 1,
+        borderStyle: 'round',
+        borderColor: 'green'
+      }
+    ));
+    
+  } catch (error) {
+    spinner.fail(chalk.red.bold('❌ Error al generar endpoint'));
+    console.log(chalk.red('\n' + error.message));
+  }
+}
+
+function listarEndpoints() {
+  console.clear();
+  mostrarBanner();
+  
+  if (endpoints.size === 0) {
+    console.log(boxen(
+      chalk.yellow.bold('🍽️  El menú está vacío\n\n') +
+      chalk.gray('Genera tu primer endpoint desde el menú principal'),
+      {
+        padding: 1,
+        margin: 1,
+        borderStyle: 'round',
+        borderColor: 'yellow'
+      }
+    ));
+    return;
+  }
+  
+  const table = new Table({
+    head: [
+      chalk.cyan.bold('N°'),
+      chalk.cyan.bold('Método'),
+      chalk.cyan.bold('Ruta'),
+      chalk.cyan.bold('Descripción'),
+      chalk.cyan.bold('Creado')
+    ],
+    colWidths: [5, 10, 30, 40, 20],
+    style: {
+      head: [],
+      border: ['cyan']
+    }
+  });
+  
+  let index = 1;
+  endpoints.forEach(ep => {
+    const metodoBadge = {
+      'GET': chalk.green('🟢 GET'),
+      'POST': chalk.blue('🔵 POST'),
+      'PUT': chalk.yellow('🟡 PUT'),
+      'DELETE': chalk.red('🔴 DELETE')
+    }[ep.method] || ep.method;
+    
+    const fecha = new Date(ep.createdAt).toLocaleString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    table.push([
+      chalk.white(index++),
+      metodoBadge,
+      chalk.yellow('/api' + ep.path),
+      chalk.gray(ep.description.substring(0, 35) + '...'),
+      chalk.gray(fecha)
+    ]);
+  });
+  
+  console.log(table.toString());
+  console.log('\n' + chalk.cyan.bold(`📊 Total de endpoints: ${endpoints.size}`));
+  console.log(chalk.green(`💾 Archivo: ${DB_FILE}`));
+}
+
+async function verDetalleEndpoint() {
+  if (endpoints.size === 0) {
+    console.log(chalk.yellow('\n⚠️  No hay endpoints para ver\n'));
+    return;
+  }
+  
+  const choices = Array.from(endpoints.values()).map((ep, i) => ({
+    name: `${i + 1}. ${ep.method} /api${ep.path} - ${ep.description}`,
+    value: ep
+  }));
+  
+  const { endpoint } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'endpoint',
+      message: chalk.yellow('Selecciona un endpoint para ver detalles:'),
+      choices: choices
+    }
+  ]);
+  
+  console.clear();
+  mostrarBanner();
+  
+  console.log(boxen(
+    chalk.bold.cyan('🔍 DETALLES DEL ENDPOINT\n\n') +
+    chalk.bold('Método: ') + chalk.green(endpoint.method) + '\n' +
+    chalk.bold('Ruta: ') + chalk.yellow('/api' + endpoint.path) + '\n' +
+    chalk.bold('Descripción: ') + chalk.gray(endpoint.description) + '\n' +
+    chalk.bold('URL: ') + chalk.blue.underline(`http://localhost:${PORT}/api${endpoint.path}`) + '\n\n' +
+    chalk.bold('Prompt original: ') + chalk.italic.gray(endpoint.originalPrompt) + '\n\n' +
+    chalk.bold('Respuesta de ejemplo:\n') +
+    chalk.dim(JSON.stringify(endpoint.responseData, null, 2)),
+    {
+      padding: 1,
+      margin: 1,
+      borderStyle: 'double',
+      borderColor: 'cyan'
+    }
+  ));
+  
+  console.log('\n' + chalk.gray('💡 Pruébalo: ') + chalk.white(`curl http://localhost:${PORT}/api${endpoint.path}`));
+}
+
+function mostrarEstadisticas() {
+  console.clear();
+  mostrarBanner();
+  
+  if (endpoints.size === 0) {
+    console.log(chalk.yellow('\n⚠️  No hay estadísticas aún\n'));
+    return;
+  }
+  
+  const byMethod = {};
+  endpoints.forEach(ep => {
+    byMethod[ep.method] = (byMethod[ep.method] || 0) + 1;
+  });
+  
+  const statsTable = new Table({
+    head: [chalk.cyan.bold('Método HTTP'), chalk.cyan.bold('Cantidad')],
+    colWidths: [20, 15],
+    style: {
+      head: [],
+      border: ['cyan']
+    }
+  });
+  
+  Object.entries(byMethod).forEach(([method, count]) => {
+    const emoji = {
+      'GET': '🟢',
+      'POST': '🔵',
+      'PUT': '🟡',
+      'DELETE': '🔴'
+    }[method] || '⚪';
+    
+    statsTable.push([
+      chalk.white(`${emoji} ${method}`),
+      chalk.green.bold(count)
+    ]);
+  });
+  
+  console.log(boxen(
+    chalk.cyan.bold('📊 ESTADÍSTICAS DE KEBAPI\n\n') +
+    chalk.white('Total de endpoints: ') + chalk.green.bold(endpoints.size) + '\n\n' +
+    statsTable.toString() + '\n\n' +
+    chalk.white('💾 Persistidos en: ') + chalk.gray(DB_FILE),
+    {
+      padding: 1,
+      margin: 1,
+      borderStyle: 'round',
+      borderColor: 'cyan'
+    }
+  ));
+}
+
+async function eliminarEndpoint() {
+  if (endpoints.size === 0) {
+    console.log(chalk.yellow('\n⚠️  No hay endpoints para eliminar\n'));
+    return;
+  }
+  
+  const choices = Array.from(endpoints.values()).map((ep, i) => ({
+    name: `${i + 1}. ${ep.method} /api${ep.path}`,
+    value: ep
+  }));
+  
+  choices.push({ name: chalk.gray('← Cancelar'), value: null });
+  
+  const { endpoint } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'endpoint',
+      message: chalk.red('🗑️  Selecciona un endpoint para eliminar:'),
+      choices: choices
+    }
+  ]);
+  
+  if (!endpoint) return;
+  
+  const { confirmar } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'confirmar',
+      message: chalk.yellow(`¿Estás seguro de eliminar ${endpoint.method} /api${endpoint.path}?`),
+      default: false
+    }
+  ]);
+  
+  if (confirmar) {
+    endpoints.delete(endpoint.id);
+    await guardarEndpoints();
+    console.log(chalk.green.bold('\n✅ Endpoint eliminado y guardado'));
+    console.log(chalk.gray('💡 Reinicia Kebapi para limpiar las rutas de Express\n'));
+  }
+}
+
+async function exportarEndpoints() {
+  if (endpoints.size === 0) {
+    console.log(chalk.yellow('\n⚠️  No hay endpoints para exportar\n'));
+    return;
+  }
+  
+  const exportFile = path.join(__dirname, `kebapi-export-${Date.now()}.json`);
+  await fs.writeJson(exportFile, Array.from(endpoints.values()), { spaces: 2 });
+  
+  console.log(boxen(
+    chalk.green.bold('✅ Endpoints exportados\n\n') +
+    chalk.white('Archivo: ') + chalk.cyan(exportFile) + '\n' +
+    chalk.white('Total: ') + chalk.yellow(endpoints.size + ' endpoints'),
+    {
+      padding: 1,
+      margin: 1,
+      borderStyle: 'round',
+      borderColor: 'green'
+    }
+  ));
+}
+
+async function menuPrincipal() {
+  while (true) {
+    console.clear();
+    mostrarBanner();
+    
+    const { opcion } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'opcion',
+        message: chalk.bold.white('¿Qué quieres hacer?'),
+        choices: [
+          { name: chalk.green('🌯 Generar nuevo endpoint'), value: 'generar' },
+          { name: chalk.cyan('📋 Ver todos los endpoints'), value: 'listar' },
+          { name: chalk.blue('🔍 Ver detalle de un endpoint'), value: 'detalle' },
+          { name: chalk.magenta('📊 Ver estadísticas'), value: 'stats' },
+          { name: chalk.red('🗑️  Eliminar endpoint'), value: 'eliminar' },
+          { name: chalk.yellow('📦 Exportar endpoints'), value: 'exportar' },
+          new inquirer.Separator(),
+          { name: chalk.gray('🚪 Salir'), value: 'salir' }
+        ]
+      }
+    ]);
+    
+    switch (opcion) {
+      case 'generar':
+        await generarEndpoint();
+        await inquirer.prompt([{ type: 'input', name: 'continuar', message: chalk.gray('\nPresiona Enter para continuar...') }]);
+        break;
+        
+      case 'listar':
+        listarEndpoints();
+        await inquirer.prompt([{ type: 'input', name: 'continuar', message: chalk.gray('\nPresiona Enter para continuar...') }]);
+        break;
+        
+      case 'detalle':
+        await verDetalleEndpoint();
+        await inquirer.prompt([{ type: 'input', name: 'continuar', message: chalk.gray('\nPresiona Enter para continuar...') }]);
+        break;
+        
+      case 'stats':
+        mostrarEstadisticas();
+        await inquirer.prompt([{ type: 'input', name: 'continuar', message: chalk.gray('\nPresiona Enter para continuar...') }]);
+        break;
+        
+      case 'eliminar':
+        await eliminarEndpoint();
+        await inquirer.prompt([{ type: 'input', name: 'continuar', message: chalk.gray('\nPresiona Enter para continuar...') }]);
+        break;
+        
+      case 'exportar':
+        await exportarEndpoints();
+        await inquirer.prompt([{ type: 'input', name: 'continuar', message: chalk.gray('\nPresiona Enter para continuar...') }]);
+        break;
+        
+      case 'salir':
+        console.clear();
+        console.log(gradient.rainbow('\n  ¡Gracias por usar KEBAPI! 🌯\n'));
+        console.log(chalk.gray('  Hasta pronto...\n'));
+        process.exit(0);
+    }
+  }
+}
+
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: '🌯 Kebapi funcionando',
+    endpoints: endpoints.size,
+    timestamp: new Date().toISOString(),
+    persistencia: 'Activa',
+    archivo: DB_FILE
+  });
+});
+
+app.get('/', (req, res) => {
+  res.json({
+    message: '🌯 Bienvenido a Kebapi',
+    description: 'Generador de APIs REST con IA',
+    version: '1.1.0',
+    features: ['Persistencia', 'IA', 'Export'],
+    endpoints: Array.from(endpoints.values()).map(ep => ({
+      method: ep.method,
+      path: '/api' + ep.path,
+      description: ep.description
+    }))
+  });
+});
+
+// Iniciar servidor
+async function iniciar() {
+  const spinner = ora({
+    text: chalk.cyan('Iniciando Kebapi...'),
+    color: 'cyan'
+  }).start();
+  
+  // Cargar endpoints guardados
+  const cargados = await cargarEndpoints();
+  
+  app.listen(PORT, () => {
+    spinner.succeed(chalk.green('Servidor iniciado'));
+    
+    if (cargados > 0) {
+      console.log(chalk.green(`💾 ${cargados} endpoints cargados desde disco`));
+    }
+    
+    // Solo mostrar menú si NO estamos en producción
+    if (!process.env.RAILWAY_ENVIRONMENT) {
+      setTimeout(() => {
+        menuPrincipal();
+      }, 500);
+    } else {
+      console.log(chalk.cyan(`\n🌯 Kebapi corriendo en modo producción en puerto ${PORT}`));
+      console.log(chalk.gray('La interfaz interactiva está deshabilitada en producción\n'));
+    }
+  });
+}
+
+iniciar();

@@ -1,0 +1,81 @@
+[
+  {
+    "id": "1765664908860",
+    "path": "/perros-peligrosos",
+    "method": "GET",
+    "description": "Obtiene una lista de perros clasificados como peligrosos, con detalles relevantes para su seguimiento y gestión.",
+    "responseData": {
+      "success": true,
+      "data": [
+        {
+          "id": "PPP-001",
+          "nombre": "Rambo",
+          "raza": "Pitbull Terrier",
+          "chipId": "ES123456789ABC",
+          "fechaNacimiento": "2018-05-10",
+          "estado": "Activo - Restricciones aplicadas",
+          "historialIncidentes": [
+            {
+              "fecha": "2022-03-15",
+              "tipo": "Mordedura leve a persona",
+              "descripcion": "Mordedura en brazo a un cartero, sin necesidad de puntos."
+            },
+            {
+              "fecha": "2023-01-20",
+              "tipo": "Pelea con otro perro",
+              "descripcion": "Agresión a un Labrador Retriever en parque, lesiones superficiales."
+            }
+          ],
+          "propietario": {
+            "nombre": "Juan Pérez",
+            "contacto": "600112233"
+          },
+          "notasPeligrosidad": "Comportamiento territorial marcado, alta reactividad a estímulos externos. Requiere bozal y correa corta en vías públicas."
+        },
+        {
+          "id": "PPP-002",
+          "nombre": "Killer",
+          "raza": "Rottweiler",
+          "chipId": "ES987654321DEF",
+          "fechaNacimiento": "2019-11-22",
+          "estado": "En seguimiento - Evaluación pendiente",
+          "historialIncidentes": [
+            {
+              "fecha": "2023-07-01",
+              "tipo": "Intento de agresión",
+              "descripcion": "Intentó morder a repartidor al abrir la puerta, detenido por el propietario."
+            }
+          ],
+          "propietario": {
+            "nombre": "María García",
+            "contacto": "600445566"
+          },
+          "notasPeligrosidad": "Ansiedad por separación manifestada en agresividad defensiva. Se recomienda adiestramiento profesional y modificación de conducta."
+        },
+        {
+          "id": "PPP-003",
+          "nombre": "Thor",
+          "raza": "Doberman",
+          "chipId": "ES456789012GHI",
+          "fechaNacimiento": "2020-03-01",
+          "estado": "Activo - Permiso especial",
+          "historialIncidentes": [
+            {
+              "fecha": "2023-09-10",
+              "tipo": "Agresión a otro perro",
+              "descripcion": "Atacó a un perro pequeño en paseo, sin causar lesiones graves pero con fuerte impacto psicológico."
+            }
+          ],
+          "propietario": {
+            "nombre": "Carlos Ruiz",
+            "contacto": "600778899"
+          },
+          "notasPeligrosidad": "Temperamento fuerte y dominante. Necesita socialización constante desde cachorro. Clasificado como PPP por normativa."
+        }
+      ],
+      "total": 3
+    },
+    "createdAt": "2025-12-13T22:28:28.860Z",
+    "originalPrompt": "perros peligrosos"
+  }
+]
