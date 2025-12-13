@@ -77,5 +77,96 @@
     },
     "createdAt": "2025-12-13T22:28:28.860Z",
     "originalPrompt": "perros peligrosos"
+  },
+  {
+    "id": "1765669436990",
+    "path": "/cardiologia/servicios",
+    "method": "GET",
+    "description": "Obtiene una lista de servicios de cardiología ofrecidos, incluyendo diagnósticos y consultas.",
+    "responseData": {
+      "success": true,
+      "data": [
+        {
+          "id": "SVC-CARD-001",
+          "name": "Consulta de Cardiología General",
+          "description": "Evaluación inicial y seguimiento con un cardiólogo para diagnóstico, manejo de enfermedades cardiovasculares y prevención.",
+          "price_range": "80 - 150 USD",
+          "estimated_duration_minutes": 30
+        },
+        {
+          "id": "SVC-CARD-002",
+          "name": "Electrocardiograma (ECG)",
+          "description": "Registro gráfico de la actividad eléctrica del corazón para detectar arritmias, isquemia o daños cardíacos.",
+          "price_range": "30 - 70 USD",
+          "estimated_duration_minutes": 10
+        },
+        {
+          "id": "SVC-CARD-003",
+          "name": "Ecocardiograma Doppler Color",
+          "description": "Estudio por ultrasonido que permite visualizar la estructura, función y flujo sanguíneo del corazón en tiempo real.",
+          "price_range": "150 - 300 USD",
+          "estimated_duration_minutes": 45
+        }
+      ],
+      "total": 3
+    },
+    "createdAt": "2025-12-13T23:43:56.990Z",
+    "originalPrompt": "quiero un endpoint sobre servicios de cardiología"
+  },
+  {
+    "id": "1765669554446",
+    "path": "/cardiologia/servicios",
+    "method": "GET",
+    "description": "Obtiene la lista de servicios cardiologicos ofrecidos a pacientes, detallando los médicos responsables.",
+    "responseData": {
+      "success": true,
+      "data": [
+        {
+          "id": "SVC001",
+          "nombre": "Consulta Cardiología General",
+          "descripcion": "Evaluación completa del corazón, diagnóstico y plan de tratamiento inicial.",
+          "medico": {
+            "id": "MED001",
+            "nombre": "Dr. Juan Pérez",
+            "especialidad": "Cardiología Clínica",
+            "hospital": "Hospital Central",
+            "contacto": "jperez@hospitalcentral.com"
+          },
+          "pacientes_atendidos_ult_mes": 120,
+          "disponibilidad": "Lunes a Viernes 09:00-17:00"
+        },
+        {
+          "id": "SVC002",
+          "nombre": "Estudio de Electrofisiología",
+          "descripcion": "Diagnóstico y tratamiento de arritmias cardiacas, incluyendo ablaciones.",
+          "medico": {
+            "id": "MED002",
+            "nombre": "Dra. Ana García",
+            "especialidad": "Electrocardióloga",
+            "hospital": "Clínica Corazón Sano",
+            "contacto": "agarcia@corazonsano.com"
+          },
+          "pacientes_atendidos_ult_mes": 45,
+          "disponibilidad": "Martes y Jueves 10:00-14:00"
+        },
+        {
+          "id": "SVC003",
+          "nombre": "Rehabilitación Cardíaca",
+          "descripcion": "Programa supervisado para pacientes post-infarto o con enfermedades cardíacas crónicas.",
+          "medico": {
+            "id": "MED003",
+            "nombre": "Dr. Luis Ramírez",
+            "especialidad": "Cardiología Preventiva y Rehabilitación",
+            "hospital": "Centro Médico Salud Vital",
+            "contacto": "lramirez@saludvital.com"
+          },
+          "pacientes_atendidos_ult_mes": 80,
+          "disponibilidad": "Lunes, Miércoles, Viernes 08:00-16:00"
+        }
+      ],
+      "total": 3
+    },
+    "createdAt": "2025-12-13T23:45:54.446Z",
+    "originalPrompt": "servicios sobre medicos a pacientes de salud cardiologica"
   }
 ]
