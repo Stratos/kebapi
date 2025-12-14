@@ -10,7 +10,12 @@ const ora = require('ora');
 const supabase = require('./supabase-config');
 const crypto = require('crypto');
 
-const GEMINI_API_KEY = 'AIzaSyCVNfm05HCPUKsAELnOfhClJ9AVQ6ULl58';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+if (!GEMINI_API_KEY) {
+  console.error('❌ ERROR: GEMINI_API_KEY environment variable is required');
+  process.exit(1);
+}
 const PORT = process.env.PORT || 3000;
 
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);

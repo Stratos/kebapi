@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-
+require('dotenv').config();
 /**
  * Kebapi CLI
  * AI-powered REST API endpoint generator
@@ -14,8 +14,15 @@ const gradient = require('gradient-string');
 const figlet = require('figlet');
 const ora = require('ora');
 const supabase = require('./supabase-config');
+const crypto = require('crypto');
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'AIzaSyA9Nc7b8L8-B1sTlJR4jPQLZkP5oMdPoLY';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+if (!GEMINI_API_KEY) {
+  console.log(chalk.red('\n❌ ERROR: GEMINI_API_KEY environment variable is required'));
+  console.log(chalk.yellow('Please set it in your .env file or environment\n'));
+  process.exit(1);
+}
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 const endpoints = new Map();
 
