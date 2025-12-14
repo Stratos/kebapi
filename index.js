@@ -65,6 +65,7 @@ async function cargarEndpoints() {
     return 0;
   }
 }
+
 async function guardarEndpoint(endpoint) {
   try {
     const { data, error } = await supabase
@@ -442,8 +443,9 @@ async function menuPrincipal() {
     }
   }
 }
+
 // ═══════════════════════════════════════════════════════════
-// 🌐 API PARA CREAR ENDPOINTS DESDE LA WEB
+// 🌐 API PARA CREAR ENDPOINTS DESDE LA WEB (CRUD COMPLETO)
 // ═══════════════════════════════════════════════════════════
 
 app.post('/api/create-endpoint', async (req, res) => {
@@ -457,8 +459,6 @@ app.post('/api/create-endpoint', async (req, res) => {
     }
 
     const token = authHeader.replace('Bearer ', '');
-    
-    // Verificar token con Supabase
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError || !user) {
@@ -491,43 +491,184 @@ app.post('/api/create-endpoint', async (req, res) => {
     
     // Generar con Gemini
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-    const aiPrompt = 'Create a REST API endpoint in JSON for: ' + prompt + '. Format: {"path": "/name", "method": "GET", "description": "...", "responseData": {"success": true, "data": [3 objects with real data], "total": 3}}. Only JSON, no markdown.';
+    const aiPrompt = `Create a REST API resource schema in JSON for: ${prompt}. 
     
+    Return ONLY a JSON object with this EXACT structure:
+    {
+      "resourceName": "singular name (e.g. 'movie', 'recipe')",
+      "resourceNamePlural": "plural name (e.g. 'movies', 'recipes')",
+      "description": "brief description",
+      "fields": [
+        {"name": "field1", "type": "string", "required": true},
+        {"name": "field2", "type": "number", "required": false}
+      ],
+      "sampleData": [
+        {"field1": "value1", "field2": 123},
+        {"field1": "value2", "field2": 456},
+        {"field1": "value3", "field2": 789}
+      ]
+    }
+    
+    Only JSON, no markdown, no explanations.`;
+
     const result = await model.generateContent(aiPrompt);
     const text = result.response.text();
     const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    const endpoint = JSON.parse(cleanText);
+    const schema = JSON.parse(cleanText);
     
-    if (!endpoint.path.startsWith('/')) {
-      endpoint.path = '/' + endpoint.path;
-    }
+    // Crear endpoint principal
+    const endpointId = crypto.randomUUID();
+    const basePath = `/${schema.resourceNamePlural.toLowerCase()}`;
     
     const endpointCompleto = {
-      id: crypto.randomUUID(),
-      ...endpoint,
-      user_id: user.id,  // ← IMPORTANTE: Asociar con el usuario
+      id: endpointId,
+      path: basePath,
+      method: 'GET',
+      description: schema.description,
+      responseData: {
+        success: true,
+        data: schema.sampleData,
+        total: schema.sampleData.length
+      },
+      user_id: user.id,
       createdAt: new Date().toISOString(),
-      originalPrompt: prompt
+      originalPrompt: prompt,
+      schema: schema
     };
     
-    // Guardar en Supabase
+    // Guardar endpoint en Supabase
     const saved = await guardarEndpoint(endpointCompleto);
     
-    if (saved) {
-      endpoints.set(saved.id, saved);
-      
-      const fullPath = '/api' + saved.path;
-      app[saved.method.toLowerCase()](fullPath, (req, res) => {
-        res.json(saved.responseData);
-      });
-      
-      return res.json({
-        success: true,
-        endpoint: saved
-      });
-    } else {
+    if (!saved) {
       throw new Error('Error saving to Supabase');
     }
+
+    // Insertar datos de ejemplo en endpoint_items
+    for (const item of schema.sampleData) {
+      await supabase
+        .from('endpoint_items')
+        .insert({
+          endpoint_id: endpointId,
+          user_id: user.id,
+          data: item
+        });
+    }
+    
+    endpoints.set(endpointId, saved);
+    
+    // Registrar rutas CRUD
+    const fullPath = '/api' + basePath;
+    
+    // GET /api/resources - Listar todos
+    app.get(fullPath, async (req, res) => {
+      const { data, error } = await supabase
+        .from('endpoint_items')
+        .select('*')
+        .eq('endpoint_id', endpointId);
+      
+      if (error) {
+        return res.status(500).json({ error: error.message });
+      }
+      
+      res.json({
+        success: true,
+        data: data.map(item => ({ id: item.id, ...item.data })),
+        total: data.length
+      });
+    });
+    
+    // GET /api/resources/:id - Obtener uno
+    app.get(`${fullPath}/:id`, async (req, res) => {
+      const { data, error } = await supabase
+        .from('endpoint_items')
+        .select('*')
+        .eq('endpoint_id', endpointId)
+        .eq('id', req.params.id)
+        .single();
+      
+      if (error) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+      
+      res.json({
+        success: true,
+        data: { id: data.id, ...data.data }
+      });
+    });
+    
+    // POST /api/resources - Crear nuevo
+    app.post(fullPath, async (req, res) => {
+      const { data, error } = await supabase
+        .from('endpoint_items')
+        .insert({
+          endpoint_id: endpointId,
+          user_id: user.id,
+          data: req.body
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        return res.status(500).json({ error: error.message });
+      }
+      
+      res.json({
+        success: true,
+        data: { id: data.id, ...data.data }
+      });
+    });
+    
+    // PUT /api/resources/:id - Actualizar
+    app.put(`${fullPath}/:id`, async (req, res) => {
+      const { data, error } = await supabase
+        .from('endpoint_items')
+        .update({ data: req.body })
+        .eq('endpoint_id', endpointId)
+        .eq('id', req.params.id)
+        .select()
+        .single();
+      
+      if (error) {
+        return res.status(500).json({ error: error.message });
+      }
+      
+      res.json({
+        success: true,
+        data: { id: data.id, ...data.data }
+      });
+    });
+    
+    // DELETE /api/resources/:id - Eliminar
+    app.delete(`${fullPath}/:id`, async (req, res) => {
+      const { error } = await supabase
+        .from('endpoint_items')
+        .delete()
+        .eq('endpoint_id', endpointId)
+        .eq('id', req.params.id);
+      
+      if (error) {
+        return res.status(500).json({ error: error.message });
+      }
+      
+      res.json({
+        success: true,
+        message: 'Deleted successfully'
+      });
+    });
+    
+    return res.json({
+      success: true,
+      endpoint: {
+        ...saved,
+        crud: {
+          list: `GET ${fullPath}`,
+          get: `GET ${fullPath}/:id`,
+          create: `POST ${fullPath}`,
+          update: `PUT ${fullPath}/:id`,
+          delete: `DELETE ${fullPath}/:id`
+        }
+      }
+    });
     
   } catch (error) {
     console.error('Error:', error);
@@ -536,64 +677,68 @@ app.post('/api/create-endpoint', async (req, res) => {
     });
   }
 });
+
 // ═══════════════════════════════════════════════════════════
 // 🌐 API REST ENDPOINTS
 // ═══════════════════════════════════════════════════════════
 
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: '🌯 Kebapi funcionando',
+  res.json({
+    status: 'healthy',
     endpoints: endpoints.size,
     timestamp: new Date().toISOString(),
-    database: 'Supabase ☁️',
-    version: '2.0.0'
+    database: 'Supabase',
+    ai: 'Gemini 2.5 Flash'
   });
 });
 
 app.get('/', (req, res) => {
+  const endpointsList = Array.from(endpoints.values()).map(ep => ({
+    method: ep.method,
+    path: '/api' + ep.path,
+    description: ep.description,
+    url: `https://kebapi.up.railway.app/api${ep.path}`
+  }));
+  
   res.json({
-    message: '🌯 Bienvenido a Kebapi',
-    description: 'Generador de APIs REST con IA',
-    version: '2.0.0',
-    database: 'Supabase',
-    features: ['Persistencia en la nube', 'IA con Gemini', 'Deploy automático'],
-    endpoints: Array.from(endpoints.values()).map(ep => ({
-      method: ep.method,
-      path: '/api' + ep.path,
-      description: ep.description,
-      url: `https://kebapi.up.railway.app/api${ep.path}`
-    }))
+    message: 'Kebapi API Generator',
+    description: 'Create REST API endpoints using AI',
+    endpoints: endpointsList,
+    total: endpointsList.length,
+    documentation: 'https://github.com/Stratos/kebapi'
   });
 });
 
-// Iniciar servidor
+// ═══════════════════════════════════════════════════════════
+// 🚀 INICIAR SERVIDOR
+// ═══════════════════════════════════════════════════════════
+
 async function iniciar() {
   const spinner = ora({
-    text: chalk.cyan('Iniciando Kebapi con Supabase...'),
+    text: chalk.cyan('Cargando Kebapi...'),
     color: 'cyan'
   }).start();
   
-  // Cargar endpoints desde Supabase
   const cargados = await cargarEndpoints();
   
+  spinner.succeed(chalk.green('¡Listo!'));
+  
+  if (cargados > 0) {
+    console.log(chalk.magenta(`☁️  ${cargados} endpoints cargados desde Supabase\n`));
+  }
+  
   app.listen(PORT, () => {
-    spinner.succeed(chalk.green('Servidor iniciado'));
-    
-    if (cargados > 0) {
-      console.log(chalk.magenta(`☁️  ${cargados} endpoints cargados desde Supabase`));
-    }
-    
-    // Solo mostrar menú si NO estamos en producción
-    if (!process.env.RAILWAY_ENVIRONMENT) {
-      setTimeout(() => {
-        menuPrincipal();
-      }, 500);
-    } else {
-      console.log(chalk.cyan(`\n🌯 Kebapi corriendo en modo producción en puerto ${PORT}`));
-      console.log(chalk.magenta('☁️  Conectado a Supabase'));
-      console.log(chalk.gray('La interfaz interactiva está deshabilitada en producción\n'));
-    }
+    console.log(chalk.green.bold(`\n🚀 Servidor iniciado en http://localhost:${PORT}`));
+    console.log(chalk.cyan(`📚 Endpoints disponibles: ${endpoints.size}`));
+    console.log(chalk.gray(`💡 Abre http://localhost:${PORT} en tu navegador\n`));
   });
+  
+  // Solo mostrar menú CLI si NO estamos en Railway
+  if (!process.env.RAILWAY_ENVIRONMENT) {
+    setTimeout(() => {
+      menuPrincipal();
+    }, 500);
+  }
 }
 
 iniciar();
