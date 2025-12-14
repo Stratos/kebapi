@@ -7,12 +7,10 @@ const boxen = require('boxen');
 const gradient = require('gradient-string');
 const figlet = require('figlet');
 const ora = require('ora');
-const fs = require('fs-extra');
-const path = require('path');
+const supabase = require('./supabase-config');
 
 const GEMINI_API_KEY = 'AIzaSyA9Nc7b8L8-B1sTlJR4jPQLZkP5oMdPoLY';
 const PORT = process.env.PORT || 3000;
-const DB_FILE = path.join(__dirname, 'kebapi-db.json');
 
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 const endpoints = new Map();
@@ -20,37 +18,62 @@ const app = express();
 app.use(express.json());
 
 // ═══════════════════════════════════════════════════════════
-// 💾 FUNCIONES DE PERSISTENCIA
+// 💾 FUNCIONES DE SUPABASE
 // ═══════════════════════════════════════════════════════════
 
 async function cargarEndpoints() {
   try {
-    if (await fs.pathExists(DB_FILE)) {
-      const data = await fs.readJson(DB_FILE);
-      data.forEach(ep => {
-        endpoints.set(ep.id, ep);
-        
-        // Registrar ruta en Express
-        const fullPath = '/api' + ep.path;
-        app[ep.method.toLowerCase()](fullPath, (req, res) => {
-          res.json(ep.responseData);
-        });
+    const { data, error } = await supabase
+      .from('endpoints')
+      .select('*')
+      .order('createdAt', { ascending: false });
+    
+    if (error) throw error;
+    
+    data.forEach(ep => {
+      endpoints.set(ep.id, ep);
+      
+      // Registrar ruta en Express
+      const fullPath = '/api' + ep.path;
+      app[ep.method.toLowerCase()](fullPath, (req, res) => {
+        res.json(ep.responseData);
       });
-      return endpoints.size;
-    }
+    });
+    
+    return endpoints.size;
   } catch (error) {
     console.error(chalk.red('Error cargando endpoints:', error.message));
+    return 0;
   }
-  return 0;
 }
 
-async function guardarEndpoints() {
+async function guardarEndpoint(endpoint) {
   try {
-    const data = Array.from(endpoints.values());
-    await fs.writeJson(DB_FILE, data, { spaces: 2 });
+    const { data, error } = await supabase
+      .from('endpoints')
+      .insert([endpoint])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error(chalk.red('Error guardando endpoint:', error.message));
+    return null;
+  }
+}
+
+async function eliminarEndpointDB(id) {
+  try {
+    const { error } = await supabase
+      .from('endpoints')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
     return true;
   } catch (error) {
-    console.error(chalk.red('Error guardando endpoints:', error.message));
+    console.error(chalk.red('Error eliminando endpoint:', error.message));
     return false;
   }
 }
@@ -63,7 +86,8 @@ function mostrarBanner() {
   });
   console.log(gradient.pastel.multiline(banner));
   console.log(chalk.cyan.bold('                  🌯 Generador de APIs REST con IA\n'));
-  console.log(chalk.gray('                  Servidor: ') + chalk.green(`http://localhost:${PORT}\n`));
+  console.log(chalk.gray('                  Servidor: ') + chalk.green(`http://localhost:${PORT}`));
+  console.log(chalk.gray('                  Database: ') + chalk.magenta(`Supabase ☁️\n`));
 }
 
 async function generarEndpoint() {
@@ -99,39 +123,43 @@ async function generarEndpoint() {
       endpoint.path = '/' + endpoint.path;
     }
     
-    const id = Date.now().toString();
     const endpointCompleto = {
-      id,
+      id: crypto.randomUUID(),
       ...endpoint,
       createdAt: new Date().toISOString(),
       originalPrompt: prompt
     };
     
-    endpoints.set(id, endpointCompleto);
+    // Guardar en Supabase
+    const saved = await guardarEndpoint(endpointCompleto);
     
-    // Guardar en archivo
-    await guardarEndpoints();
-    
-    const fullPath = '/api' + endpoint.path;
-    app[endpoint.method.toLowerCase()](fullPath, (req, res) => {
-      res.json(endpoint.responseData);
-    });
-    
-    spinner.succeed(chalk.green.bold('✅ ¡Endpoint creado y guardado!'));
-    
-    console.log('\n' + boxen(
-      chalk.bold.white('🏷️  Método: ') + chalk.cyan(endpoint.method) + '\n' +
-      chalk.bold.white('📍 Ruta: ') + chalk.yellow(fullPath) + '\n' +
-      chalk.bold.white('📝 Descripción: ') + chalk.gray(endpoint.description) + '\n' +
-      chalk.bold.white('🔗 URL: ') + chalk.blue.underline(`http://localhost:${PORT}${fullPath}`) + '\n' +
-      chalk.bold.white('💾 Estado: ') + chalk.green('Guardado en disco'),
-      {
-        padding: 1,
-        margin: 1,
-        borderStyle: 'round',
-        borderColor: 'green'
-      }
-    ));
+    if (saved) {
+      endpoints.set(saved.id, saved);
+      
+      const fullPath = '/api' + saved.path;
+      app[saved.method.toLowerCase()](fullPath, (req, res) => {
+        res.json(saved.responseData);
+      });
+      
+      spinner.succeed(chalk.green.bold('✅ ¡Endpoint creado y guardado en Supabase!'));
+      
+      console.log('\n' + boxen(
+        chalk.bold.white('🏷️  Método: ') + chalk.cyan(saved.method) + '\n' +
+        chalk.bold.white('📍 Ruta: ') + chalk.yellow(fullPath) + '\n' +
+        chalk.bold.white('📝 Descripción: ') + chalk.gray(saved.description) + '\n' +
+        chalk.bold.white('🔗 URL Local: ') + chalk.blue.underline(`http://localhost:${PORT}${fullPath}`) + '\n' +
+        chalk.bold.white('🌍 URL Cloud: ') + chalk.green.underline(`https://kebapi.up.railway.app${fullPath}`) + '\n' +
+        chalk.bold.white('💾 Estado: ') + chalk.magenta('☁️  Guardado en Supabase'),
+        {
+          padding: 1,
+          margin: 1,
+          borderStyle: 'round',
+          borderColor: 'green'
+        }
+      ));
+    } else {
+      spinner.fail(chalk.red.bold('❌ Error al guardar en Supabase'));
+    }
     
   } catch (error) {
     spinner.fail(chalk.red.bold('❌ Error al generar endpoint'));
@@ -199,7 +227,7 @@ function listarEndpoints() {
   
   console.log(table.toString());
   console.log('\n' + chalk.cyan.bold(`📊 Total de endpoints: ${endpoints.size}`));
-  console.log(chalk.green(`💾 Archivo: ${DB_FILE}`));
+  console.log(chalk.magenta(`☁️  Base de datos: Supabase`));
 }
 
 async function verDetalleEndpoint() {
@@ -230,7 +258,8 @@ async function verDetalleEndpoint() {
     chalk.bold('Método: ') + chalk.green(endpoint.method) + '\n' +
     chalk.bold('Ruta: ') + chalk.yellow('/api' + endpoint.path) + '\n' +
     chalk.bold('Descripción: ') + chalk.gray(endpoint.description) + '\n' +
-    chalk.bold('URL: ') + chalk.blue.underline(`http://localhost:${PORT}/api${endpoint.path}`) + '\n\n' +
+    chalk.bold('URL Local: ') + chalk.blue.underline(`http://localhost:${PORT}/api${endpoint.path}`) + '\n' +
+    chalk.bold('URL Cloud: ') + chalk.green.underline(`https://kebapi.up.railway.app/api${endpoint.path}`) + '\n\n' +
     chalk.bold('Prompt original: ') + chalk.italic.gray(endpoint.originalPrompt) + '\n\n' +
     chalk.bold('Respuesta de ejemplo:\n') +
     chalk.dim(JSON.stringify(endpoint.responseData, null, 2)),
@@ -242,7 +271,7 @@ async function verDetalleEndpoint() {
     }
   ));
   
-  console.log('\n' + chalk.gray('💡 Pruébalo: ') + chalk.white(`curl http://localhost:${PORT}/api${endpoint.path}`));
+  console.log('\n' + chalk.gray('💡 Pruébalo: ') + chalk.white(`curl https://kebapi.up.railway.app/api${endpoint.path}`));
 }
 
 function mostrarEstadisticas() {
@@ -286,7 +315,7 @@ function mostrarEstadisticas() {
     chalk.cyan.bold('📊 ESTADÍSTICAS DE KEBAPI\n\n') +
     chalk.white('Total de endpoints: ') + chalk.green.bold(endpoints.size) + '\n\n' +
     statsTable.toString() + '\n\n' +
-    chalk.white('💾 Persistidos en: ') + chalk.gray(DB_FILE),
+    chalk.white('☁️  Base de datos: ') + chalk.magenta('Supabase'),
     {
       padding: 1,
       margin: 1,
@@ -330,33 +359,13 @@ async function eliminarEndpoint() {
   ]);
   
   if (confirmar) {
-    endpoints.delete(endpoint.id);
-    await guardarEndpoints();
-    console.log(chalk.green.bold('\n✅ Endpoint eliminado y guardado'));
-    console.log(chalk.gray('💡 Reinicia Kebapi para limpiar las rutas de Express\n'));
-  }
-}
-
-async function exportarEndpoints() {
-  if (endpoints.size === 0) {
-    console.log(chalk.yellow('\n⚠️  No hay endpoints para exportar\n'));
-    return;
-  }
-  
-  const exportFile = path.join(__dirname, `kebapi-export-${Date.now()}.json`);
-  await fs.writeJson(exportFile, Array.from(endpoints.values()), { spaces: 2 });
-  
-  console.log(boxen(
-    chalk.green.bold('✅ Endpoints exportados\n\n') +
-    chalk.white('Archivo: ') + chalk.cyan(exportFile) + '\n' +
-    chalk.white('Total: ') + chalk.yellow(endpoints.size + ' endpoints'),
-    {
-      padding: 1,
-      margin: 1,
-      borderStyle: 'round',
-      borderColor: 'green'
+    const deleted = await eliminarEndpointDB(endpoint.id);
+    if (deleted) {
+      endpoints.delete(endpoint.id);
+      console.log(chalk.green.bold('\n✅ Endpoint eliminado de Supabase'));
+      console.log(chalk.gray('💡 Reinicia Kebapi para limpiar las rutas de Express\n'));
     }
-  ));
+  }
 }
 
 async function menuPrincipal() {
@@ -375,7 +384,6 @@ async function menuPrincipal() {
           { name: chalk.blue('🔍 Ver detalle de un endpoint'), value: 'detalle' },
           { name: chalk.magenta('📊 Ver estadísticas'), value: 'stats' },
           { name: chalk.red('🗑️  Eliminar endpoint'), value: 'eliminar' },
-          { name: chalk.yellow('📦 Exportar endpoints'), value: 'exportar' },
           new inquirer.Separator(),
           { name: chalk.gray('🚪 Salir'), value: 'salir' }
         ]
@@ -408,11 +416,6 @@ async function menuPrincipal() {
         await inquirer.prompt([{ type: 'input', name: 'continuar', message: chalk.gray('\nPresiona Enter para continuar...') }]);
         break;
         
-      case 'exportar':
-        await exportarEndpoints();
-        await inquirer.prompt([{ type: 'input', name: 'continuar', message: chalk.gray('\nPresiona Enter para continuar...') }]);
-        break;
-        
       case 'salir':
         console.clear();
         console.log(gradient.rainbow('\n  ¡Gracias por usar KEBAPI! 🌯\n'));
@@ -422,13 +425,17 @@ async function menuPrincipal() {
   }
 }
 
+// ═══════════════════════════════════════════════════════════
+// 🌐 API REST ENDPOINTS
+// ═══════════════════════════════════════════════════════════
+
 app.get('/health', (req, res) => {
   res.json({ 
     status: '🌯 Kebapi funcionando',
     endpoints: endpoints.size,
     timestamp: new Date().toISOString(),
-    persistencia: 'Activa',
-    archivo: DB_FILE
+    database: 'Supabase ☁️',
+    version: '2.0.0'
   });
 });
 
@@ -436,12 +443,14 @@ app.get('/', (req, res) => {
   res.json({
     message: '🌯 Bienvenido a Kebapi',
     description: 'Generador de APIs REST con IA',
-    version: '1.1.0',
-    features: ['Persistencia', 'IA', 'Export'],
+    version: '2.0.0',
+    database: 'Supabase',
+    features: ['Persistencia en la nube', 'IA con Gemini', 'Deploy automático'],
     endpoints: Array.from(endpoints.values()).map(ep => ({
       method: ep.method,
       path: '/api' + ep.path,
-      description: ep.description
+      description: ep.description,
+      url: `https://kebapi.up.railway.app/api${ep.path}`
     }))
   });
 });
@@ -449,18 +458,18 @@ app.get('/', (req, res) => {
 // Iniciar servidor
 async function iniciar() {
   const spinner = ora({
-    text: chalk.cyan('Iniciando Kebapi...'),
+    text: chalk.cyan('Iniciando Kebapi con Supabase...'),
     color: 'cyan'
   }).start();
   
-  // Cargar endpoints guardados
+  // Cargar endpoints desde Supabase
   const cargados = await cargarEndpoints();
   
   app.listen(PORT, () => {
     spinner.succeed(chalk.green('Servidor iniciado'));
     
     if (cargados > 0) {
-      console.log(chalk.green(`💾 ${cargados} endpoints cargados desde disco`));
+      console.log(chalk.magenta(`☁️  ${cargados} endpoints cargados desde Supabase`));
     }
     
     // Solo mostrar menú si NO estamos en producción
@@ -470,6 +479,7 @@ async function iniciar() {
       }, 500);
     } else {
       console.log(chalk.cyan(`\n🌯 Kebapi corriendo en modo producción en puerto ${PORT}`));
+      console.log(chalk.magenta('☁️  Conectado a Supabase'));
       console.log(chalk.gray('La interfaz interactiva está deshabilitada en producción\n'));
     }
   });
