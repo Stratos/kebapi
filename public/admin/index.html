@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kebapi Admin - Data Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --purple: #5C4EE5;
+            --purple-light: #7B68EE;
+            --purple-dark: #4A3DC4;
+            --bg: #F9FAFB;
+            --bg-white: #FFFFFF;
+            --text: #1F2937;
+            --text-secondary: #6B7280;
+            --border: #E5E7EB;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+
+        .header {
+            margin-bottom: 32px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 16px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--purple);
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .page-description {
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+
+        .section {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: var(--purple);
+            box-shadow: 0 0 0 3px rgba(92, 78, 229, 0.1);
+        }
+
+        .data-table-container {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .btn-success {
+            padding: 10px 20px;
+            background: #10B981;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background: var(--bg);
+            padding: 12px 20px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            letter-spacing: 0.5px;
+        }
+
+        .data-table td {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        .data-table tr:hover {
+            background: var(--bg);
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-secondary {
+            padding: 8px 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--purple);
+            color: var(--purple);
+        }
+
+        .btn-danger {
+            padding: 8px 12px;
+            background: #EF4444;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .btn-danger:hover {
+            background: #DC2626;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 12px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--purple);
+            box-shadow: 0 0 0 3px rgba(92, 78, 229, 0.1);
+        }
+
+        .btn-primary {
+            padding: 10px 20px;
+            background: var(--purple);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            background: var(--purple-dark);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 16px;
+            background: var(--bg);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 24px;
+        }
+
+        .empty-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .empty-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border);
+            border-top-color: var(--purple);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/" class="back-link">
+                <i class="fas fa-arrow-left"></i>
+                Back to Generator
+            </a>
+            <h1 class="page-title">Data Manager</h1>
+            <p class="page-description">Manage your endpoint data visually with full CRUD operations</p>
+        </div>
+
+        <!-- Endpoint Selector -->
+        <div class="section">
+            <label class="form-label">Select Endpoint to Manage</label>
+            <select id="endpointSelector" class="form-select" onchange="loadEndpointData()">
+                <option value="">-- Select an endpoint --</option>
+            </select>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Loading data...</p>
+        </div>
+
+        <!-- Data Table -->
+        <div id="dataTableContainer" class="hidden">
+            <div class="data-table-container">
+                <div class="table-header">
+                    <h3 id="tableTitle" class="table-title">Data</h3>
+                    <button onclick="openCreateModal()" class="btn-success">
+                        <i class="fas fa-plus"></i>
+                        Add New
+                    </button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="data-table">
+                        <thead id="tableHead"></thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state hidden">
+                <div class="empty-icon">
+                    <i class="fas fa-database"></i>
+                </div>
+                <div class="empty-title">No data yet</div>
+                <div class="empty-description">Click "Add New" to create your first item</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Create/Edit -->
+    <div id="dataModal" class="modal-overlay hidden" onclick="closeModalOnOverlay(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 id="modalTitle" class="modal-title">Add New Item</h3>
+            </div>
+            <div class="modal-body">
+                <form id="dataForm"></form>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeModal()" class="btn-secondary">Cancel</button>
+                <button onclick="saveData()" class="btn-primary">
+                    <i class="fas fa-save"></i>
+                    Save
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://nugcshddtrufgciosrsq.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51Z2NzaGRkdHJ1ZmdjaW9zcnNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2NTUyMTMsImV4cCI6MjA4MTIzMTIxM30.1ECmZ8bG8HasOZ6pH_b3atPg6i9dxTRcPPUXehbiixY';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        let currentUser = null;
+        let currentEndpoint = null;
+        let currentEndpointData = [];
+        let editingItemId = null;
+
+        async function init() {
+            // Check auth
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (!session) {
+                window.location.href = '/';
+                return;
+            }
+
+            currentUser = session.user;
+            loadEndpoints();
+        }
+
+        async function loadEndpoints() {
+            const { data, error } = await supabase
+                .from('endpoints')
+                .select('*')
+                .order('createdAt', { ascending: false });
+
+            const selector = document.getElementById('endpointSelector');
+            selector.innerHTML = '<option value="">-- Select an endpoint --</option>';
+
+            if (data && data.length > 0) {
+                data.forEach(ep => {
+                    const option = document.createElement('option');
+                    option.value = ep.id;
+                    option.textContent = `${ep.method} /api${ep.path} - ${ep.description}`;
+                    option.dataset.endpoint = JSON.stringify(ep);
+                    selector.appendChild(option);
+                });
+            }
+        }
+
+        async function loadEndpointData() {
+            const selector = document.getElementById('endpointSelector');
+            const selectedOption = selector.options[selector.selectedIndex];
+            
+            if (!selectedOption.value) {
+                document.getElementById('dataTableContainer').classList.add('hidden');
+                return;
+            }
+
+            currentEndpoint = JSON.parse(selectedOption.dataset.endpoint);
+            
+            document.getElementById('loadingState').classList.remove('hidden');
+            document.getElementById('dataTableContainer').classList.add('hidden');
+
+            // Load data
+            const { data, error } = await supabase
+                .from('endpoint_items')
+                .select('*')
+                .eq('endpoint_id', currentEndpoint.id)
+                .order('created_at', { ascending: false });
+
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('dataTableContainer').classList.remove('hidden');
+
+            if (error) {
+                console.error('Error loading data:', error);
+                alert('Error loading data: ' + error.message);
+                return;
+            }
+
+            currentEndpointData = data || [];
+            document.getElementById('tableTitle').textContent = currentEndpoint.description;
+            renderTable();
+        }
+
+        function renderTable() {
+            const thead = document.getElementById('tableHead');
+            const tbody = document.getElementById('tableBody');
+            const emptyState = document.getElementById('emptyState');
+
+            if (currentEndpointData.length === 0) {
+                thead.innerHTML = '';
+                tbody.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            // Get field names
+            const fields = currentEndpoint.schema?.fields || [];
+            const sampleItem = currentEndpointData[0]?.data || {};
+            const fieldNames = fields.length > 0 
+                ? fields.map(f => f.name) 
+                : Object.keys(sampleItem);
+
+            // Build header
+            thead.innerHTML = `
+                <tr>
+                    ${fieldNames.map(field => `<th>${field}</th>`).join('')}
+                    <th style="width: 120px;">Actions</th>
+                </tr>
+            `;
+
+            // Build rows
+            tbody.innerHTML = currentEndpointData.map(item => `
+                <tr>
+                    ${fieldNames.map(field => {
+                        const value = item.data[field];
+                        const displayValue = typeof value === 'object' 
+                            ? JSON.stringify(value) 
+                            : (value || '-');
+                        return `<td>${displayValue}</td>`;
+                    }).join('')}
+                    <td>
+                        <div class="table-actions">
+                            <button onclick="openEditModal('${item.id}')" class="btn-secondary" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteItem('${item.id}')" class="btn-danger" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openCreateModal() {
+            if (!currentEndpoint) return;
+            
+            editingItemId = null;
+            document.getElementById('modalTitle').textContent = 'Add New Item';
+            buildForm();
+            document.getElementById('dataModal').classList.remove('hidden');
+        }
+
+        function openEditModal(itemId) {
+            editingItemId = itemId;
+            document.getElementById('modalTitle').textContent = 'Edit Item';
+            buildForm(itemId);
+            document.getElementById('dataModal').classList.remove('hidden');
+        }
+
+        function buildForm(itemId = null) {
+            const form = document.getElementById('dataForm');
+            const fields = currentEndpoint.schema?.fields || [];
+            
+            let itemData = {};
+            if (itemId) {
+                const item = currentEndpointData.find(i => i.id === itemId);
+                itemData = item?.data || {};
+            }
+
+            form.innerHTML = fields.map(field => `
+                <div class="form-group">
+                    <label class="form-label">
+                        ${field.name}${field.required ? ' *' : ''}
+                    </label>
+                    <input 
+                        type="${field.type === 'number' ? 'number' : 'text'}" 
+                        name="${field.name}"
+                        class="form-input"
+                        value="${itemData[field.name] || ''}"
+                        ${field.required ? 'required' : ''}
+                        placeholder="Enter ${field.name}"
+                    >
+                </div>
+            `).join('');
+        }
+
+        async function saveData() {
+            const form = document.getElementById('dataForm');
+            
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const formData = new FormData(form);
+            const data = {};
+            
+            // Convert form data to object
+            const fields = currentEndpoint.schema?.fields || [];
+            for (let [key, value] of formData.entries()) {
+                const field = fields.find(f => f.name === key);
+                if (field && field.type === 'number') {
+                    data[key] = parseFloat(value) || value;
+                } else {
+                    data[key] = value;
+                }
+            }
+
+            if (editingItemId) {
+                // Update
+                const { error } = await supabase
+                    .from('endpoint_items')
+                    .update({ data: data })
+                    .eq('id', editingItemId);
+
+                if (error) {
+                    alert('Error updating: ' + error.message);
+                    return;
+                }
+            } else {
+                // Create
+                const { error } = await supabase
+                    .from('endpoint_items')
+                    .insert({
+                        endpoint_id: currentEndpoint.id,
+                        user_id: currentUser.id,
+                        data: data
+                    });
+
+                if (error) {
+                    alert('Error creating: ' + error.message);
+                    return;
+                }
+            }
+
+            closeModal();
+            loadEndpointData();
+        }
+
+        async function deleteItem(itemId) {
+            if (!confirm('Are you sure you want to delete this item?')) {
+                return;
+            }
+
+            const { error } = await supabase
+                .from('endpoint_items')
+                .delete()
+                .eq('id', itemId);
+
+            if (error) {
+                alert('Error deleting: ' + error.message);
+                return;
+            }
+
+            loadEndpointData();
+        }
+
+        function closeModal() {
+            document.getElementById('dataModal').classList.add('hidden');
+        }
+
+        function closeModalOnOverlay(event) {
+            if (event.target === event.currentTarget) {
+                closeModal();
+            }
+        }
+
+        // Initialize
+        init();
+    </script>
+</body>
+</html>
