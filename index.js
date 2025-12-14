@@ -10,7 +10,7 @@ const ora = require('ora');
 const supabase = require('./supabase-config');
 const crypto = require('crypto');
 
-const GEMINI_API_KEY = 'AIzaSyDi6Gxx1oe2S8e_N5MIzUiON2da9LjFdE4';
+const GEMINI_API_KEY = 'AIzaSyCVNfm05HCPUKsAELnOfhClJ9AVQ6ULl58';
 const PORT = process.env.PORT || 3000;
 
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
