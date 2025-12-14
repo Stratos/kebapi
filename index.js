@@ -16,6 +16,7 @@ const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 const endpoints = new Map();
 const app = express();
 app.use(express.json());
+app.use(express.static('public'));
 
 // ═══════════════════════════════════════════════════════════
 // 💾 FUNCIONES DE SUPABASE
