@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kebapi - API Generator</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -24,27 +25,116 @@
             --sidebar-bg: #F3F4F6;
         }
 
-        @font-face {
-            font-family: 'SF Pro Display';
-            src: local('SF Pro Display'), local('Helvetica Neue'), local('-apple-system'), local('BlinkMacSystemFont');
-            font-weight: 100 900;
-        }
-
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
             background: var(--bg);
             color: var(--text);
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
         }
 
+        /* Auth Screen */
+        .auth-screen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--purple) 0%, var(--purple-light) 100%);
+        }
+
+        .auth-card {
+            background: white;
+            padding: 48px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .auth-logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--purple), var(--purple-light));
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            color: white;
+            font-size: 32px;
+        }
+
+        .auth-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        .auth-subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+
+        .btn-google {
+            width: 100%;
+            padding: 14px 24px;
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: all 0.2s;
+        }
+
+        .btn-google:hover {
+            border-color: var(--purple);
+            background: var(--bg);
+        }
+
+        .google-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Loading */
+        .loading-screen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--border);
+            border-top-color: var(--purple);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden { display: none; }
+
+        /* Main App Styles (tu diseño actual) */
         .container {
             display: flex;
             min-height: 100vh;
         }
 
-        /* Sidebar */
         .sidebar {
             width: 280px;
             background: var(--bg-white);
@@ -66,18 +156,53 @@
             gap: 12px;
             font-size: 18px;
             font-weight: 600;
-            color: var(--text);
         }
 
         .logo-icon {
             width: 32px;
             height: 32px;
-            background: linear-gradient(135deg, var(--purple) 0%, var(--purple-light) 100%);
+            background: linear-gradient(135deg, var(--purple), var(--purple-light));
             border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
+        }
+
+        .user-info {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            margin-top: 24px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-bottom: 8px;
+        }
+
+        .user-email {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .btn-logout {
+            width: 100%;
+            padding: 8px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-logout:hover {
+            background: var(--bg-white);
+            border-color: var(--purple);
+            color: var(--purple);
         }
 
         .nav {
@@ -117,7 +242,6 @@
         .nav-item i {
             width: 18px;
             text-align: center;
-            font-size: 15px;
         }
 
         .nav-item:hover {
@@ -130,7 +254,6 @@
             color: white;
         }
 
-        /* Main Content */
         .main {
             flex: 1;
             margin-left: 280px;
@@ -168,21 +291,6 @@
             font-weight: 500;
         }
 
-        .search-box {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .search-input {
-            padding: 8px 12px 8px 36px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            font-size: 14px;
-            width: 240px;
-            background: var(--bg) url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%236B7280" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>') no-repeat 12px center;
-        }
-
         .content {
             padding: 32px;
             max-width: 1400px;
@@ -196,17 +304,14 @@
             font-size: 32px;
             font-weight: 700;
             margin-bottom: 8px;
-            color: var(--text);
             letter-spacing: -0.5px;
         }
 
         .page-description {
             font-size: 16px;
             color: var(--text-secondary);
-            line-height: 1.5;
         }
 
-        /* Cards */
         .cards-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -220,7 +325,6 @@
             border-radius: 8px;
             padding: 24px;
             transition: box-shadow 0.2s;
-            cursor: pointer;
         }
 
         .card:hover {
@@ -244,7 +348,6 @@
             font-size: 16px;
             font-weight: 600;
             margin-bottom: 8px;
-            color: var(--text);
         }
 
         .card-description {
@@ -253,7 +356,6 @@
             line-height: 1.5;
         }
 
-        /* Generator Section */
         .generator-section {
             background: var(--bg-white);
             border: 1px solid var(--border);
@@ -266,8 +368,6 @@
             font-size: 20px;
             font-weight: 600;
             margin-bottom: 24px;
-            color: var(--text);
-            letter-spacing: -0.3px;
         }
 
         .form-group {
@@ -279,7 +379,6 @@
             font-size: 14px;
             font-weight: 500;
             margin-bottom: 8px;
-            color: var(--text);
         }
 
         .form-textarea {
@@ -330,7 +429,6 @@
 
         .template-btn i {
             color: var(--purple);
-            font-size: 16px;
         }
 
         .template-btn:hover {
@@ -364,7 +462,6 @@
             cursor: not-allowed;
         }
 
-        /* Endpoints List */
         .endpoints-list {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -399,28 +496,13 @@
             letter-spacing: 0.5px;
         }
 
-        .method-get {
-            background: #ECFDF5;
-            color: #059669;
-        }
-
-        .method-post {
-            background: #EFF6FF;
-            color: #2563EB;
-        }
-
-        .method-put {
-            background: #FEF3C7;
-            color: #D97706;
-        }
-
-        .method-delete {
-            background: #FEE2E2;
-            color: #DC2626;
-        }
+        .method-get { background: #ECFDF5; color: #059669; }
+        .method-post { background: #EFF6FF; color: #2563EB; }
+        .method-put { background: #FEF3C7; color: #D97706; }
+        .method-delete { background: #FEE2E2; color: #DC2626; }
 
         .endpoint-path {
-            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            font-family: 'Monaco', 'Courier New', monospace;
             font-size: 13px;
             color: var(--purple);
             margin-bottom: 8px;
@@ -455,34 +537,10 @@
             gap: 6px;
         }
 
-        .btn-secondary i {
-            font-size: 12px;
-        }
-
         .btn-secondary:hover {
             background: var(--bg-white);
             border-color: var(--purple);
             color: var(--purple);
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-secondary);
-        }
-
-        .spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid var(--border);
-            border-top-color: var(--purple);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
         }
 
         .alert {
@@ -504,8 +562,10 @@
             color: #991B1B;
         }
 
-        .hidden {
-            display: none;
+        .alert-info {
+            background: #EFF6FF;
+            border: 1px solid #BFDBFE;
+            color: #1E40AF;
         }
 
         .empty-state {
@@ -530,208 +590,290 @@
             font-size: 18px;
             font-weight: 600;
             margin-bottom: 8px;
-            color: var(--text);
         }
 
         .empty-description {
             font-size: 14px;
             color: var(--text-secondary);
         }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .limit-info {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .limit-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .limit-count {
+            font-weight: 600;
+            color: var(--purple);
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="logo">
-                    <div class="logo-icon">
-                        <i class="fas fa-layer-group"></i>
-                    </div>
-                    <span>Kebapi</span>
-                </div>
+    <!-- Auth Screen -->
+    <div id="authScreen" class="auth-screen">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <i class="fas fa-layer-group"></i>
             </div>
-            <nav class="nav">
-                <div class="nav-section">
-                    <div class="nav-title">Main</div>
-                    <a class="nav-item active" onclick="showSection('generator')">
-                        <i class="fas fa-wand-magic-sparkles"></i>
-                        <span>Generator</span>
-                    </a>
-                    <a class="nav-item" onclick="showSection('endpoints')">
-                        <i class="fas fa-server"></i>
-                        <span>Endpoints</span>
-                    </a>
-                    <a class="nav-item" onclick="showSection('documentation')">
-                        <i class="fas fa-book"></i>
-                        <span>Documentation</span>
-                    </a>
-                </div>
-                <div class="nav-section">
-                    <div class="nav-title">Resources</div>
-                    <a class="nav-item" href="https://github.com/Stratos/kebapi" target="_blank">
-                        <i class="fab fa-github"></i>
-                        <span>GitHub</span>
-                    </a>
-                    <a class="nav-item" href="https://supabase.com" target="_blank">
-                        <i class="fas fa-database"></i>
-                        <span>Database</span>
-                    </a>
-                </div>
-            </nav>
-        </aside>
+            <h1 class="auth-title">Kebapi</h1>
+            <p class="auth-subtitle">AI-Powered API Generator</p>
+            <button onclick="signInWithGoogle()" class="btn-google">
+                <svg class="google-icon" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Continue with Google
+            </button>
+        </div>
+    </div>
 
-        <!-- Main Content -->
-        <main class="main">
-            <div class="topbar">
-                <div class="topbar-content">
-                    <div class="breadcrumb">
-                        Developer <i class="fas fa-chevron-right"></i> <span id="breadcrumbPage">Kebapi</span>
-                    </div>
-                    <div class="search-box">
-                        <input type="text" class="search-input" placeholder="Search...">
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen hidden">
+        <div class="spinner"></div>
+        <p style="color: var(--text-secondary);">Loading...</p>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="hidden">
+        <div class="container">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <div class="logo">
+                        <div class="logo-icon">
+                            <i class="fas fa-layer-group"></i>
+                        </div>
+                        <span>Kebapi</span>
                     </div>
                 </div>
-            </div>
-
-            <div class="content">
-                <!-- Generator Section -->
-                <div id="generatorSection">
-                    <div class="page-header">
-                        <h1 class="page-title">Generate API Endpoints</h1>
-                        <p class="page-description">
-                            Kebapi is an AI-powered tool that generates REST API endpoints from natural language descriptions. 
-                            Simply describe what you need, and get a working API instantly.
-                        </p>
+                <nav class="nav">
+                    <div class="nav-section">
+                        <div class="nav-title">Main</div>
+                        <a class="nav-item active" onclick="showSection('generator')">
+                            <i class="fas fa-wand-magic-sparkles"></i>
+                            <span>Generator</span>
+                        </a>
+                        <a class="nav-item" onclick="showSection('endpoints')">
+                            <i class="fas fa-server"></i>
+                            <span>My Endpoints</span>
+                        </a>
                     </div>
+                </nav>
+                <div class="user-info">
+                    <img id="userAvatar" class="user-avatar" src="" alt="User">
+                    <div id="userEmail" class="user-email"></div>
+                    <button onclick="signOut()" class="btn-logout">
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
+                    </button>
+                </div>
+            </aside>
 
-                    <div class="cards-grid">
-                        <div class="card">
-                            <div class="card-icon"><i class="fas fa-pen-to-square"></i></div>
-                            <div class="card-title">Describe</div>
-                            <div class="card-description">Write a natural language description of your endpoint needs</div>
-                        </div>
-                        <div class="card">
-                            <div class="card-icon"><i class="fas fa-brain"></i></div>
-                            <div class="card-title">Generate</div>
-                            <div class="card-description">AI creates a fully functional REST API endpoint with sample data</div>
-                        </div>
-                        <div class="card">
-                            <div class="card-icon"><i class="fas fa-rocket"></i></div>
-                            <div class="card-title">Deploy</div>
-                            <div class="card-description">Your endpoint is instantly available at a public URL</div>
+            <!-- Main Content -->
+            <main class="main">
+                <div class="topbar">
+                    <div class="topbar-content">
+                        <div class="breadcrumb">
+                            Kebapi <i class="fas fa-chevron-right"></i> <span id="breadcrumbPage">Generator</span>
                         </div>
                     </div>
+                </div>
 
-                    <div class="generator-section">
-                        <h2 class="section-title">Create New Endpoint</h2>
-                        
-                        <div class="form-group">
-                            <label class="form-label">Endpoint Description</label>
-                            <textarea 
-                                id="promptInput" 
-                                class="form-textarea" 
-                                placeholder="Example: Create an endpoint that returns a list of restaurants with name, cuisine type, address, and rating..."></textarea>
-                            <div class="form-hint">Describe your endpoint in plain English. Be specific about the data fields you need.</div>
+                <div class="content">
+                    <!-- Generator Section -->
+                    <div id="generatorSection">
+                        <div class="page-header">
+                            <h1 class="page-title">Generate API Endpoints</h1>
+                            <p class="page-description">
+                                Create REST API endpoints using natural language powered by AI
+                            </p>
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Quick Templates</label>
-                            <div class="templates">
-                                <button class="template-btn" onclick="setPrompt('endpoint de restaurantes con nombre, tipo de comida, dirección y calificación')">
-                                    <i class="fas fa-utensils"></i>
-                                    <span>Restaurants</span>
-                                </button>
-                                <button class="template-btn" onclick="setPrompt('API de productos tech con nombre, precio, marca y stock')">
-                                    <i class="fas fa-laptop"></i>
-                                    <span>Tech Products</span>
-                                </button>
-                                <button class="template-btn" onclick="setPrompt('endpoint de usuarios con nombre, email, edad y ciudad')">
-                                    <i class="fas fa-users"></i>
-                                    <span>Users</span>
-                                </button>
-                                <button class="template-btn" onclick="setPrompt('API de tareas con título, descripción, prioridad y estado')">
-                                    <i class="fas fa-list-check"></i>
-                                    <span>Tasks</span>
-                                </button>
+                        <div class="limit-info">
+                            <span class="limit-text">Your endpoints</span>
+                            <span class="limit-count" id="endpointCount">0 / 10</span>
+                        </div>
+
+                        <div class="cards-grid">
+                            <div class="card">
+                                <div class="card-icon"><i class="fas fa-pen-to-square"></i></div>
+                                <div class="card-title">Describe</div>
+                                <div class="card-description">Write a natural language description</div>
+                            </div>
+                            <div class="card">
+                                <div class="card-icon"><i class="fas fa-brain"></i></div>
+                                <div class="card-title">Generate</div>
+                                <div class="card-description">AI creates a functional endpoint</div>
+                            </div>
+                            <div class="card">
+                                <div class="card-icon"><i class="fas fa-rocket"></i></div>
+                                <div class="card-title">Deploy</div>
+                                <div class="card-description">Instantly available at a public URL</div>
                             </div>
                         </div>
 
-                        <button class="btn-primary" id="generateBtn" onclick="generarEndpoint()">
-                            <i class="fas fa-wand-magic-sparkles"></i>
-                            <span>Generate Endpoint</span>
-                        </button>
+                        <div class="generator-section">
+                            <h2 class="section-title">Create New Endpoint</h2>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Endpoint Description</label>
+                                <textarea 
+                                    id="promptInput" 
+                                    class="form-textarea" 
+                                    placeholder="Example: Create an endpoint that returns a list of restaurants with name, cuisine type, address, and rating..."></textarea>
+                                <div class="form-hint">Describe your endpoint in plain English. Be specific about the data fields you need.</div>
+                            </div>
 
-                        <div id="loading" class="loading hidden">
-                            <div class="spinner"></div>
-                            <p>Generating endpoint...</p>
+                            <div class="form-group">
+                                <label class="form-label">Quick Templates</label>
+                                <div class="templates">
+                                    <button class="template-btn" onclick="setPrompt('endpoint de restaurantes con nombre, tipo de comida, dirección y calificación')">
+                                        <i class="fas fa-utensils"></i>
+                                        <span>Restaurants</span>
+                                    </button>
+                                    <button class="template-btn" onclick="setPrompt('API de productos tech con nombre, precio, marca y stock')">
+                                        <i class="fas fa-laptop"></i>
+                                        <span>Tech Products</span>
+                                    </button>
+                                    <button class="template-btn" onclick="setPrompt('endpoint de usuarios con nombre, email, edad y ciudad')">
+                                        <i class="fas fa-users"></i>
+                                        <span>Users</span>
+                                    </button>
+                                    <button class="template-btn" onclick="setPrompt('API de tareas con título, descripción, prioridad y estado')">
+                                        <i class="fas fa-list-check"></i>
+                                        <span>Tasks</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button class="btn-primary" id="generateBtn" onclick="generarEndpoint()">
+                                <i class="fas fa-wand-magic-sparkles"></i>
+                                <span>Generate Endpoint</span>
+                            </button>
+
+                            <div id="loading" class="loading hidden">
+                                <div class="spinner"></div>
+                                <p>Generating endpoint...</p>
+                            </div>
+
+                            <div id="result" class="hidden"></div>
+                            <div id="error" class="hidden"></div>
+                        </div>
+                    </div>
+
+                    <!-- Endpoints Section -->
+                    <div id="endpointsSection" class="hidden">
+                        <div class="page-header">
+                            <h1 class="page-title">My Endpoints</h1>
+                            <p class="page-description">
+                                View and manage your generated API endpoints
+                            </p>
                         </div>
 
-                        <div id="result" class="hidden"></div>
-                        <div id="error" class="hidden"></div>
-                    </div>
-                </div>
-
-                <!-- Endpoints Section -->
-                <div id="endpointsSection" class="hidden">
-                    <div class="page-header">
-                        <h1 class="page-title">Active Endpoints</h1>
-                        <p class="page-description">
-                            View and manage all your generated API endpoints. Each endpoint is publicly accessible and ready to use.
-                        </p>
-                    </div>
-
-                    <div id="endpointsList" class="endpoints-list"></div>
-                    <div id="noEndpoints" class="empty-state">
-                        <div class="empty-icon">
-                            <i class="fas fa-layer-group"></i>
+                        <div id="endpointsList" class="endpoints-list"></div>
+                        <div id="noEndpoints" class="empty-state">
+                            <div class="empty-icon">
+                                <i class="fas fa-layer-group"></i>
+                            </div>
+                            <div class="empty-title">No endpoints yet</div>
+                            <div class="empty-description">Create your first endpoint using the generator</div>
                         </div>
-                        <div class="empty-title">No endpoints yet</div>
-                        <div class="empty-description">Create your first endpoint using the generator</div>
                     </div>
                 </div>
-
-                <!-- Documentation Section -->
-                <div id="documentationSection" class="hidden">
-                    <div class="page-header">
-                        <h1 class="page-title">Documentation</h1>
-                        <p class="page-description">
-                            Learn how to use Kebapi to generate and manage your API endpoints.
-                        </p>
-                    </div>
-
-                    <div class="generator-section">
-                        <h2 class="section-title">Getting Started</h2>
-                        <p style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 24px;">
-                            Kebapi allows you to generate REST API endpoints using natural language. Simply describe what you need,
-                            and the AI will create a fully functional endpoint with realistic sample data.
-                        </p>
-
-                        <h3 style="font-size: 16px; font-weight: 600; margin: 24px 0 12px;">Base URL</h3>
-                        <code style="display: block; padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; font-family: monospace; font-size: 14px;">
-                            https://kebapi.up.railway.app
-                        </code>
-
-                        <h3 style="font-size: 16px; font-weight: 600; margin: 24px 0 12px;">Features</h3>
-                        <ul style="list-style: none; padding: 0; color: var(--text-secondary);">
-                            <li style="padding: 8px 0; border-bottom: 1px solid var(--border);"><i class="fas fa-check" style="color: var(--purple); margin-right: 8px;"></i> AI-powered endpoint generation</li>
-                            <li style="padding: 8px 0; border-bottom: 1px solid var(--border);"><i class="fas fa-check" style="color: var(--purple); margin-right: 8px;"></i> Real-time database with Supabase</li>
-                            <li style="padding: 8px 0; border-bottom: 1px solid var(--border);"><i class="fas fa-check" style="color: var(--purple); margin-right: 8px;"></i> Automatic deployment via Railway</li>
-                            <li style="padding: 8px 0;"><i class="fas fa-check" style="color: var(--purple); margin-right: 8px;"></i> RESTful API standards</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </main>
+            </main>
+        </div>
     </div>
 
     <script>
         const API_URL = window.location.origin;
+        const SUPABASE_URL = 'https://nugcshddtrufgciosrsq.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51Z2NzaGRkdHJ1ZmdjaW9zcnNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2NTUyMTMsImV4cCI6MjA4MTIzMTIxM30.1ECmZ8bG8HasOZ6pH_b3atPg6i9dxTRcPPUXehbiixY';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let currentUser = null;
+
+        // Check auth state on load
+        async function init() {
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (session) {
+                currentUser = session.user;
+                showApp();
+            } else {
+                showAuth();
+            }
+
+            // Listen for auth changes
+            supabase.auth.onAuthStateChange((event, session) => {
+                if (session) {
+                    currentUser = session.user;
+                    showApp();
+                } else {
+                    showAuth();
+                }
+            });
+        }
+
+        function showAuth() {
+            document.getElementById('authScreen').classList.remove('hidden');
+            document.getElementById('loadingScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        }
+
+        function showApp() {
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('loadingScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            
+            // Update user info
+            document.getElementById('userEmail').textContent = currentUser.email;
+            document.getElementById('userAvatar').src = currentUser.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.email)}&background=5C4EE5&color=fff`;
+            
+            // Load endpoints
+            cargarEndpoints();
+        }
+
+        async function signInWithGoogle() {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin
+                }
+            });
+            
+            if (error) {
+                alert('Error signing in: ' + error.message);
+            }
+        }
+
+        async function signOut() {
+            const { error } = await supabase.auth.signOut();
+            if (error) {
+                alert('Error signing out: ' + error.message);
+            }
+        }
 
         function showSection(section) {
             document.getElementById('generatorSection').classList.add('hidden');
             document.getElementById('endpointsSection').classList.add('hidden');
-            document.getElementById('documentationSection').classList.add('hidden');
             
             document.getElementById(section + 'Section').classList.remove('hidden');
             
@@ -739,9 +881,8 @@
             event.target.closest('.nav-item').classList.add('active');
             
             const titles = {
-                'generator': 'Kebapi',
-                'endpoints': 'Endpoints',
-                'documentation': 'Documentation'
+                'generator': 'Generator',
+                'endpoints': 'My Endpoints'
             };
             document.getElementById('breadcrumbPage').textContent = titles[section];
             
@@ -775,9 +916,14 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Generating...</span>';
 
             try {
+                const { data: { session } } = await supabase.auth.getSession();
+                
                 const response = await fetch(`${API_URL}/api/create-endpoint`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`
+                    },
                     body: JSON.stringify({ prompt })
                 });
 
@@ -812,6 +958,7 @@
                 `;
 
                 document.getElementById('promptInput').value = '';
+                await cargarEndpoints();
 
             } catch (err) {
                 loading.classList.add('hidden');
@@ -825,17 +972,24 @@
 
         async function cargarEndpoints() {
             try {
-                const response = await fetch(`${API_URL}/`);
-                const data = await response.json();
+                const { data, error } = await supabase
+                    .from('endpoints')
+                    .select('*')
+                    .order('createdAt', { ascending: false });
 
                 const list = document.getElementById('endpointsList');
                 const noEndpoints = document.getElementById('noEndpoints');
+                const endpointCount = document.getElementById('endpointCount');
 
-                if (data.endpoints && data.endpoints.length > 0) {
+                if (error) throw error;
+
+                if (data && data.length > 0) {
                     noEndpoints.classList.add('hidden');
+                    endpointCount.textContent = `${data.length} / 10`;
                     
-                    list.innerHTML = data.endpoints.map(ep => {
+                    list.innerHTML = data.map(ep => {
                         const methodClass = 'method-' + ep.method.toLowerCase();
+                        const fullUrl = `${API_URL}/api${ep.path}`;
                         return `
                             <div class="endpoint-card">
                                 <div class="endpoint-header">
@@ -844,11 +998,11 @@
                                 <div class="endpoint-path">${ep.path}</div>
                                 <div class="endpoint-description">${ep.description}</div>
                                 <div class="endpoint-actions">
-                                    <button class="btn-secondary" onclick="window.open('${ep.url}', '_blank')">
+                                    <button class="btn-secondary" onclick="window.open('${fullUrl}', '_blank')">
                                         <i class="fas fa-flask"></i>
                                         <span>Test</span>
                                     </button>
-                                    <button class="btn-secondary" onclick="copyToClipboard('${ep.url}')">
+                                    <button class="btn-secondary" onclick="copyToClipboard('${fullUrl}')">
                                         <i class="fas fa-copy"></i>
                                         <span>Copy URL</span>
                                     </button>
@@ -858,6 +1012,7 @@
                     }).join('');
                 } else {
                     noEndpoints.classList.remove('hidden');
+                    endpointCount.textContent = '0 / 10';
                     list.innerHTML = '';
                 }
             } catch (err) {
@@ -871,8 +1026,8 @@
             });
         }
 
-        cargarEndpoints();
-        setInterval(cargarEndpoints, 30000);
+        // Initialize on page load
+        init();
     </script>
 </body>
 </html>

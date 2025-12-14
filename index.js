@@ -431,17 +431,50 @@ async function menuPrincipal() {
 
 app.post('/api/create-endpoint', async (req, res) => {
   try {
+    // Verificar autenticación
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        error: 'Authentication required. Please sign in.'
+      });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    
+    // Verificar token con Supabase
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      return res.status(401).json({
+        error: 'Invalid or expired token'
+      });
+    }
+
     const { prompt } = req.body;
     
     if (!prompt || prompt.length < 10) {
       return res.status(400).json({
-        error: 'El prompt debe tener al menos 10 caracteres'
+        error: 'Prompt must be at least 10 characters'
+      });
+    }
+
+    // Verificar límite de endpoints por usuario
+    const { data: userEndpoints, error: countError } = await supabase
+      .from('endpoints')
+      .select('id')
+      .eq('user_id', user.id);
+
+    if (countError) throw countError;
+
+    if (userEndpoints && userEndpoints.length >= 10) {
+      return res.status(429).json({
+        error: 'Limit reached: You can create up to 10 endpoints. Delete some to create new ones.'
       });
     }
     
     // Generar con Gemini
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-    const aiPrompt = 'Crea un endpoint REST API en JSON para: ' + prompt + '. Formato: {"path": "/nombre", "method": "GET", "description": "...", "responseData": {"success": true, "data": [3 objetos con datos reales], "total": 3}}. Solo JSON, sin markdown.';
+    const aiPrompt = 'Create a REST API endpoint in JSON for: ' + prompt + '. Format: {"path": "/name", "method": "GET", "description": "...", "responseData": {"success": true, "data": [3 objects with real data], "total": 3}}. Only JSON, no markdown.';
     
     const result = await model.generateContent(aiPrompt);
     const text = result.response.text();
@@ -455,6 +488,7 @@ app.post('/api/create-endpoint', async (req, res) => {
     const endpointCompleto = {
       id: crypto.randomUUID(),
       ...endpoint,
+      user_id: user.id,  // ← IMPORTANTE: Asociar con el usuario
       createdAt: new Date().toISOString(),
       originalPrompt: prompt
     };
@@ -475,13 +509,13 @@ app.post('/api/create-endpoint', async (req, res) => {
         endpoint: saved
       });
     } else {
-      throw new Error('Error guardando en Supabase');
+      throw new Error('Error saving to Supabase');
     }
     
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({
-      error: error.message || 'Error al generar endpoint'
+      error: error.message || 'Error generating endpoint'
     });
   }
 });

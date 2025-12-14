@@ -1,25 +1,44 @@
 {
   "name": "kebapi",
-  "version": "1.1.0",
-  "description": "Generador de APIs REST con IA",
+  "version": "1.0.0",
+  "description": "AI-powered REST API endpoint generator",
   "main": "index.js",
+  "bin": {
+    "kebapi": "./cli.js"
+  },
   "scripts": {
     "start": "node index.js"
+  },
+  "keywords": [
+    "api",
+    "rest",
+    "generator",
+    "ai",
+    "gemini",
+    "cli",
+    "endpoints",
+    "mock"
+  ],
+  "author": "Stratos",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Stratos/kebapi.git"
   },
   "engines": {
     "node": ">=18.0.0"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
-    "@supabase/supabase-js": "^2.87.1",
-    "boxen": "^5.1.2",
-    "chalk": "^4.1.2",
-    "cli-table3": "^0.6.3",
+    "@supabase/supabase-js": "^2.39.0",
     "express": "^4.18.2",
-    "figlet": "^1.7.0",
-    "fs-extra": "^11.2.0",
-    "gradient-string": "^2.0.2",
+    "chalk": "^4.1.2",
     "inquirer": "^8.2.5",
-    "ora": "^5.4.1"
+    "cli-table3": "^0.6.3",
+    "boxen": "^5.1.2",
+    "gradient-string": "^2.0.2",
+    "figlet": "^1.7.0",
+    "ora": "^5.4.1",
+    "fs-extra": "^11.2.0"
   }
 }
