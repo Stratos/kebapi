@@ -9,7 +9,7 @@ const figlet = require('figlet');
 const ora = require('ora');
 const supabase = require('./supabase-config');
 
-const GEMINI_API_KEY = 'AIzaSyA9Nc7b8L8-B1sTlJR4jPQLZkP5oMdPoLY';
+const GEMINI_API_KEY = 'AIzaSyDi6Gxx1oe2S8e_N5MIzUiON2da9LjFdE4';
 const PORT = process.env.PORT || 3000;
 
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
@@ -31,23 +31,34 @@ async function cargarEndpoints() {
     
     if (error) throw error;
     
-    data.forEach(ep => {
-      endpoints.set(ep.id, ep);
-      
-      // Registrar ruta en Express
-      const fullPath = '/api' + ep.path;
-      app[ep.method.toLowerCase()](fullPath, (req, res) => {
-        res.json(ep.responseData);
+    if (data) {
+      data.forEach(ep => {
+        endpoints.set(ep.id, ep);
+        
+        // IMPORTANTE: Registrar ruta en Express
+        const fullPath = '/api' + ep.path;
+        const method = ep.method.toLowerCase();
+        
+        // Remover ruta existente si ya existe
+        app._router.stack = app._router.stack.filter(r => {
+          return !(r.route && r.route.path === fullPath && r.route.methods[method]);
+        });
+        
+        // Registrar nueva ruta
+        app[method](fullPath, (req, res) => {
+          res.json(ep.responseData);
+        });
+        
+        console.log(`✓ Loaded: ${ep.method} ${fullPath}`);
       });
-    });
+    }
     
     return endpoints.size;
   } catch (error) {
-    console.error(chalk.red('Error cargando endpoints:', error.message));
+    console.error('Error loading endpoints:', error.message);
     return 0;
   }
 }
-
 async function guardarEndpoint(endpoint) {
   try {
     const { data, error } = await supabase
