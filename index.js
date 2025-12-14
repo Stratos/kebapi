@@ -8,6 +8,7 @@ const gradient = require('gradient-string');
 const figlet = require('figlet');
 const ora = require('ora');
 const supabase = require('./supabase-config');
+const crypto = require('crypto');
 
 const GEMINI_API_KEY = 'AIzaSyDi6Gxx1oe2S8e_N5MIzUiON2da9LjFdE4';
 const PORT = process.env.PORT || 3000;
