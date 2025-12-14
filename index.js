@@ -424,7 +424,66 @@ async function menuPrincipal() {
     }
   }
 }
+// ═══════════════════════════════════════════════════════════
+// 🌐 API PARA CREAR ENDPOINTS DESDE LA WEB
+// ═══════════════════════════════════════════════════════════
 
+app.post('/api/create-endpoint', async (req, res) => {
+  try {
+    const { prompt } = req.body;
+    
+    if (!prompt || prompt.length < 10) {
+      return res.status(400).json({
+        error: 'El prompt debe tener al menos 10 caracteres'
+      });
+    }
+    
+    // Generar con Gemini
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const aiPrompt = 'Crea un endpoint REST API en JSON para: ' + prompt + '. Formato: {"path": "/nombre", "method": "GET", "description": "...", "responseData": {"success": true, "data": [3 objetos con datos reales], "total": 3}}. Solo JSON, sin markdown.';
+    
+    const result = await model.generateContent(aiPrompt);
+    const text = result.response.text();
+    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    const endpoint = JSON.parse(cleanText);
+    
+    if (!endpoint.path.startsWith('/')) {
+      endpoint.path = '/' + endpoint.path;
+    }
+    
+    const endpointCompleto = {
+      id: crypto.randomUUID(),
+      ...endpoint,
+      createdAt: new Date().toISOString(),
+      originalPrompt: prompt
+    };
+    
+    // Guardar en Supabase
+    const saved = await guardarEndpoint(endpointCompleto);
+    
+    if (saved) {
+      endpoints.set(saved.id, saved);
+      
+      const fullPath = '/api' + saved.path;
+      app[saved.method.toLowerCase()](fullPath, (req, res) => {
+        res.json(saved.responseData);
+      });
+      
+      return res.json({
+        success: true,
+        endpoint: saved
+      });
+    } else {
+      throw new Error('Error guardando en Supabase');
+    }
+    
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      error: error.message || 'Error al generar endpoint'
+    });
+  }
+});
 // ═══════════════════════════════════════════════════════════
 // 🌐 API REST ENDPOINTS
 // ═══════════════════════════════════════════════════════════
