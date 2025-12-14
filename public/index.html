@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kebapi - API Generator</title>
-    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -24,11 +24,19 @@
             --sidebar-bg: #F3F4F6;
         }
 
+        @font-face {
+            font-family: 'SF Pro Display';
+            src: local('SF Pro Display'), local('Helvetica Neue'), local('-apple-system'), local('BlinkMacSystemFont');
+            font-weight: 100 900;
+        }
+
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
             background: var(--bg);
             color: var(--text);
             line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         .container {
@@ -69,7 +77,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            color: white;
         }
 
         .nav {
@@ -94,6 +102,7 @@
         .nav-item {
             display: flex;
             align-items: center;
+            gap: 10px;
             padding: 10px 12px;
             color: var(--text-secondary);
             text-decoration: none;
@@ -103,6 +112,12 @@
             transition: all 0.15s;
             cursor: pointer;
             margin-bottom: 2px;
+        }
+
+        .nav-item i {
+            width: 18px;
+            text-align: center;
+            font-size: 15px;
         }
 
         .nav-item:hover {
@@ -144,6 +159,10 @@
             color: var(--text-secondary);
         }
 
+        .breadcrumb i {
+            font-size: 10px;
+        }
+
         .breadcrumb span {
             color: var(--text);
             font-weight: 500;
@@ -156,12 +175,12 @@
         }
 
         .search-input {
-            padding: 8px 36px 8px 12px;
+            padding: 8px 12px 8px 36px;
             border: 1px solid var(--border);
             border-radius: 6px;
             font-size: 14px;
             width: 240px;
-            background: var(--bg);
+            background: var(--bg) url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%236B7280" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>') no-repeat 12px center;
         }
 
         .content {
@@ -178,6 +197,7 @@
             font-weight: 700;
             margin-bottom: 8px;
             color: var(--text);
+            letter-spacing: -0.5px;
         }
 
         .page-description {
@@ -216,7 +236,8 @@
             align-items: center;
             justify-content: center;
             margin-bottom: 16px;
-            font-size: 20px;
+            color: var(--purple);
+            font-size: 18px;
         }
 
         .card-title {
@@ -246,6 +267,7 @@
             font-weight: 600;
             margin-bottom: 24px;
             color: var(--text);
+            letter-spacing: -0.3px;
         }
 
         .form-group {
@@ -292,6 +314,9 @@
         }
 
         .template-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             padding: 12px;
             background: var(--bg);
             border: 1px solid var(--border);
@@ -301,6 +326,11 @@
             cursor: pointer;
             transition: all 0.15s;
             text-align: left;
+        }
+
+        .template-btn i {
+            color: var(--purple);
+            font-size: 16px;
         }
 
         .template-btn:hover {
@@ -319,6 +349,10 @@
             font-weight: 600;
             cursor: pointer;
             transition: background 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .btn-primary:hover {
@@ -386,7 +420,7 @@
         }
 
         .endpoint-path {
-            font-family: 'Monaco', 'Courier New', monospace;
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
             font-size: 13px;
             color: var(--purple);
             margin-bottom: 8px;
@@ -415,6 +449,14 @@
             font-weight: 500;
             cursor: pointer;
             transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-secondary i {
+            font-size: 12px;
         }
 
         .btn-secondary:hover {
@@ -472,9 +514,16 @@
         }
 
         .empty-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-            opacity: 0.3;
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 16px;
+            background: var(--sidebar-bg);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 24px;
         }
 
         .empty-title {
@@ -496,21 +545,38 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
-                    <div class="logo-icon">🌯</div>
+                    <div class="logo-icon">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
                     <span>Kebapi</span>
                 </div>
             </div>
             <nav class="nav">
                 <div class="nav-section">
                     <div class="nav-title">Main</div>
-                    <a class="nav-item active" onclick="showSection('generator')">Generator</a>
-                    <a class="nav-item" onclick="showSection('endpoints')">Endpoints</a>
-                    <a class="nav-item" onclick="showSection('documentation')">Documentation</a>
+                    <a class="nav-item active" onclick="showSection('generator')">
+                        <i class="fas fa-wand-magic-sparkles"></i>
+                        <span>Generator</span>
+                    </a>
+                    <a class="nav-item" onclick="showSection('endpoints')">
+                        <i class="fas fa-server"></i>
+                        <span>Endpoints</span>
+                    </a>
+                    <a class="nav-item" onclick="showSection('documentation')">
+                        <i class="fas fa-book"></i>
+                        <span>Documentation</span>
+                    </a>
                 </div>
                 <div class="nav-section">
                     <div class="nav-title">Resources</div>
-                    <a class="nav-item" href="https://github.com/Stratos/kebapi" target="_blank">GitHub</a>
-                    <a class="nav-item" href="https://supabase.com" target="_blank">Database</a>
+                    <a class="nav-item" href="https://github.com/Stratos/kebapi" target="_blank">
+                        <i class="fab fa-github"></i>
+                        <span>GitHub</span>
+                    </a>
+                    <a class="nav-item" href="https://supabase.com" target="_blank">
+                        <i class="fas fa-database"></i>
+                        <span>Database</span>
+                    </a>
                 </div>
             </nav>
         </aside>
@@ -520,7 +586,7 @@
             <div class="topbar">
                 <div class="topbar-content">
                     <div class="breadcrumb">
-                        Developer / <span id="breadcrumbPage">Kebapi</span>
+                        Developer <i class="fas fa-chevron-right"></i> <span id="breadcrumbPage">Kebapi</span>
                     </div>
                     <div class="search-box">
                         <input type="text" class="search-input" placeholder="Search...">
@@ -541,17 +607,17 @@
 
                     <div class="cards-grid">
                         <div class="card">
-                            <div class="card-icon">📝</div>
+                            <div class="card-icon"><i class="fas fa-pen-to-square"></i></div>
                             <div class="card-title">Describe</div>
                             <div class="card-description">Write a natural language description of your endpoint needs</div>
                         </div>
                         <div class="card">
-                            <div class="card-icon">🤖</div>
+                            <div class="card-icon"><i class="fas fa-brain"></i></div>
                             <div class="card-title">Generate</div>
                             <div class="card-description">AI creates a fully functional REST API endpoint with sample data</div>
                         </div>
                         <div class="card">
-                            <div class="card-icon">🚀</div>
+                            <div class="card-icon"><i class="fas fa-rocket"></i></div>
                             <div class="card-title">Deploy</div>
                             <div class="card-description">Your endpoint is instantly available at a public URL</div>
                         </div>
@@ -572,14 +638,29 @@
                         <div class="form-group">
                             <label class="form-label">Quick Templates</label>
                             <div class="templates">
-                                <button class="template-btn" onclick="setPrompt('endpoint de restaurantes con nombre, tipo de comida, dirección y calificación')">🍽️ Restaurants</button>
-                                <button class="template-btn" onclick="setPrompt('API de productos tech con nombre, precio, marca y stock')">💻 Tech Products</button>
-                                <button class="template-btn" onclick="setPrompt('endpoint de usuarios con nombre, email, edad y ciudad')">👥 Users</button>
-                                <button class="template-btn" onclick="setPrompt('API de tareas con título, descripción, prioridad y estado')">✅ Tasks</button>
+                                <button class="template-btn" onclick="setPrompt('endpoint de restaurantes con nombre, tipo de comida, dirección y calificación')">
+                                    <i class="fas fa-utensils"></i>
+                                    <span>Restaurants</span>
+                                </button>
+                                <button class="template-btn" onclick="setPrompt('API de productos tech con nombre, precio, marca y stock')">
+                                    <i class="fas fa-laptop"></i>
+                                    <span>Tech Products</span>
+                                </button>
+                                <button class="template-btn" onclick="setPrompt('endpoint de usuarios con nombre, email, edad y ciudad')">
+                                    <i class="fas fa-users"></i>
+                                    <span>Users</span>
+                                </button>
+                                <button class="template-btn" onclick="setPrompt('API de tareas con título, descripción, prioridad y estado')">
+                                    <i class="fas fa-list-check"></i>
+                                    <span>Tasks</span>
+                                </button>
                             </div>
                         </div>
 
-                        <button class="btn-primary" id="generateBtn" onclick="generarEndpoint()">Generate Endpoint</button>
+                        <button class="btn-primary" id="generateBtn" onclick="generarEndpoint()">
+                            <i class="fas fa-wand-magic-sparkles"></i>
+                            <span>Generate Endpoint</span>
+                        </button>
 
                         <div id="loading" class="loading hidden">
                             <div class="spinner"></div>
@@ -602,7 +683,9 @@
 
                     <div id="endpointsList" class="endpoints-list"></div>
                     <div id="noEndpoints" class="empty-state">
-                        <div class="empty-icon">🌯</div>
+                        <div class="empty-icon">
+                            <i class="fas fa-layer-group"></i>
+                        </div>
                         <div class="empty-title">No endpoints yet</div>
                         <div class="empty-description">Create your first endpoint using the generator</div>
                     </div>
@@ -631,10 +714,10 @@
 
                         <h3 style="font-size: 16px; font-weight: 600; margin: 24px 0 12px;">Features</h3>
                         <ul style="list-style: none; padding: 0; color: var(--text-secondary);">
-                            <li style="padding: 8px 0; border-bottom: 1px solid var(--border);">✓ AI-powered endpoint generation</li>
-                            <li style="padding: 8px 0; border-bottom: 1px solid var(--border);">✓ Real-time database with Supabase</li>
-                            <li style="padding: 8px 0; border-bottom: 1px solid var(--border);">✓ Automatic deployment via Railway</li>
-                            <li style="padding: 8px 0;">✓ RESTful API standards</li>
+                            <li style="padding: 8px 0; border-bottom: 1px solid var(--border);"><i class="fas fa-check" style="color: var(--purple); margin-right: 8px;"></i> AI-powered endpoint generation</li>
+                            <li style="padding: 8px 0; border-bottom: 1px solid var(--border);"><i class="fas fa-check" style="color: var(--purple); margin-right: 8px;"></i> Real-time database with Supabase</li>
+                            <li style="padding: 8px 0; border-bottom: 1px solid var(--border);"><i class="fas fa-check" style="color: var(--purple); margin-right: 8px;"></i> Automatic deployment via Railway</li>
+                            <li style="padding: 8px 0;"><i class="fas fa-check" style="color: var(--purple); margin-right: 8px;"></i> RESTful API standards</li>
                         </ul>
                     </div>
                 </div>
@@ -653,7 +736,7 @@
             document.getElementById(section + 'Section').classList.remove('hidden');
             
             document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            event.target.classList.add('active');
+            event.target.closest('.nav-item').classList.add('active');
             
             const titles = {
                 'generator': 'Kebapi',
@@ -679,7 +762,7 @@
             const btn = document.getElementById('generateBtn');
 
             if (prompt.length < 10) {
-                error.innerHTML = '<div class="alert alert-error">Prompt must be at least 10 characters</div>';
+                error.innerHTML = '<div class="alert alert-error"><i class="fas fa-exclamation-circle"></i> Prompt must be at least 10 characters</div>';
                 error.classList.remove('hidden');
                 result.classList.add('hidden');
                 return;
@@ -689,7 +772,7 @@
             result.classList.add('hidden');
             error.classList.add('hidden');
             btn.disabled = true;
-            btn.textContent = 'Generating...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Generating...</span>';
 
             try {
                 const response = await fetch(`${API_URL}/api/create-endpoint`, {
@@ -712,7 +795,7 @@
                 
                 result.innerHTML = `
                     <div class="alert alert-success">
-                        <strong>Endpoint created successfully!</strong><br><br>
+                        <strong><i class="fas fa-check-circle"></i> Endpoint created successfully!</strong><br><br>
                         <div style="margin-top: 12px;">
                             <span class="method-badge ${methodClass}">${data.endpoint.method}</span>
                             <code style="margin-left: 12px; color: var(--purple);">/api${data.endpoint.path}</code>
@@ -722,7 +805,8 @@
                                style="width: 100%; padding: 8px; margin-top: 8px; border: 1px solid var(--border); border-radius: 4px; font-family: monospace; font-size: 13px;"
                                onclick="this.select()">
                         <button onclick="window.open('${fullUrl}', '_blank')" class="btn-primary" style="margin-top: 12px;">
-                            Test Endpoint
+                            <i class="fas fa-arrow-up-right-from-square"></i>
+                            <span>Test Endpoint</span>
                         </button>
                     </div>
                 `;
@@ -731,11 +815,11 @@
 
             } catch (err) {
                 loading.classList.add('hidden');
-                error.innerHTML = `<div class="alert alert-error">${err.message}</div>`;
+                error.innerHTML = `<div class="alert alert-error"><i class="fas fa-exclamation-circle"></i> ${err.message}</div>`;
                 error.classList.remove('hidden');
             } finally {
                 btn.disabled = false;
-                btn.textContent = 'Generate Endpoint';
+                btn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i><span>Generate Endpoint</span>';
             }
         }
 
@@ -760,8 +844,14 @@
                                 <div class="endpoint-path">${ep.path}</div>
                                 <div class="endpoint-description">${ep.description}</div>
                                 <div class="endpoint-actions">
-                                    <button class="btn-secondary" onclick="window.open('${ep.url}', '_blank')">Test</button>
-                                    <button class="btn-secondary" onclick="copyToClipboard('${ep.url}')">Copy URL</button>
+                                    <button class="btn-secondary" onclick="window.open('${ep.url}', '_blank')">
+                                        <i class="fas fa-flask"></i>
+                                        <span>Test</span>
+                                    </button>
+                                    <button class="btn-secondary" onclick="copyToClipboard('${ep.url}')">
+                                        <i class="fas fa-copy"></i>
+                                        <span>Copy URL</span>
+                                    </button>
                                 </div>
                             </div>
                         `;
