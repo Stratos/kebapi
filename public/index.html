@@ -1201,20 +1201,19 @@
                 const fullUrl = `${API_URL}/api${ep.path}`;
 
                 const publishBtn = ep.published
-    ? `
-    <button class="btn-secondary"
-        style="background:#EF4444;color:white;border-color:#EF4444"
-        onclick="togglePublish('${ep.id}', false)">
-        <i class="fas fa-eye-slash"></i>
-        Unpublish
-    </button>`
-    : `
-    <button class="btn-secondary"
-        style="background:#10B981;color:white;border-color:#10B981"
-        onclick="togglePublish('${ep.id}', true)">
-        <i class="fas fa-globe"></i>
-        Publish
-    </button>`;
+                    ? `
+                        <button class="btn-secondary"
+                            style="background:#EF4444;color:white;border-color:#EF4444"
+                            onclick="togglePublish('${ep.id}', false)">
+                            <i class="fas fa-eye-slash"></i> Unpublish
+                        </button>`
+                    : `
+                        <button class="btn-secondary"
+                            style="background:#10B981;color:white;border-color:#10B981"
+                            onclick="togglePublish('${ep.id}', true)">
+                            <i class="fas fa-globe"></i> Publish
+                        </button>`;
+
 
                 return `
                 <div class="endpoint-card">
@@ -1254,24 +1253,43 @@
     }
 }
 
-/* 🆕 MARKETPLACE */
+// 🆕 MARKETPLACE - Publish/Unpublish
 async function togglePublish(endpointId, publish) {
+    console.log('🟢 togglePublish ejecutada:', { endpointId, publish });
+    
     const confirmMsg = publish
         ? 'Publish this API to the public marketplace?'
         : 'Remove this API from the marketplace?';
 
-    if (!confirm(confirmMsg)) return;
-
-    const { error } = await supabase
-        .from('endpoints')
-        .update({ published: publish })
-        .eq('id', endpointId);
-
-    if (error) {
-        alert('Error updating visibility: ' + error.message);
+    if (!confirm(confirmMsg)) {
+        console.log('❌ Cancelado por el usuario');
         return;
     }
 
+    console.log('🔵 Actualizando Supabase...');
+
+    try {
+        const { error } = await supabase
+            .from('endpoints')
+            .update({ published: publish })
+            .eq('id', endpointId);
+
+        console.log('🟡 Respuesta Supabase:', { error });
+
+        if (error) {
+            console.error('❌ Error:', error);
+            alert('Error updating visibility: ' + error.message);
+            return;
+        }
+
+        console.log('✅ Éxito! Recargando endpoints...');
+        await cargarEndpoints();
+        
+    } catch (err) {
+        console.error('❌ Exception:', err);
+        alert('Error: ' + err.message);
+    }
+}
     cargarEndpoints();
 }
 
