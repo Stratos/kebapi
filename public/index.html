@@ -1177,121 +1177,115 @@
         }
 
         async function cargarEndpoints() {
-    try {
-        const { data, error } = await supabase
-            .from('endpoints')
-            .select('*')
-            .order('createdAt', { ascending: false });
+            try {
+                const { data, error } = await supabase
+                    .from('endpoints')
+                    .select('*')
+                    .order('createdAt', { ascending: false });
 
-        const list = document.getElementById('endpointsList');
-        const noEndpoints = document.getElementById('noEndpoints');
-        const endpointCount = document.getElementById('endpointCount');
+                const list = document.getElementById('endpointsList');
+                const noEndpoints = document.getElementById('noEndpoints');
+                const endpointCount = document.getElementById('endpointCount');
 
-        if (error) throw error;
+                if (error) throw error;
 
-        if (data && data.length > 0) {
-            noEndpoints.classList.add('hidden');
-            endpointCount.textContent = `${data.length} / 10`;
+                if (data && data.length > 0) {
+                    noEndpoints.classList.add('hidden');
+                    endpointCount.textContent = `${data.length} / 10`;
 
-            endpoints.clear();
-            data.forEach(ep => endpoints.set(ep.id, ep));
+                    endpoints.clear();
+                    data.forEach(ep => endpoints.set(ep.id, ep));
 
-            list.innerHTML = data.map(ep => {
-                const methodClass = 'method-' + ep.method.toLowerCase();
-                const fullUrl = `${API_URL}/api${ep.path}`;
+                    list.innerHTML = data.map(ep => {
+                        const methodClass = 'method-' + ep.method.toLowerCase();
+                        const fullUrl = `${API_URL}/api${ep.path}`;
 
-                const publishBtn = ep.published
-                    ? `
-                        <button class="btn-secondary"
-                            style="background:#EF4444;color:white;border-color:#EF4444"
-                            onclick="togglePublish('${ep.id}', false)">
-                            <i class="fas fa-eye-slash"></i> Unpublish
-                        </button>`
-                    : `
-                        <button class="btn-secondary"
-                            style="background:#10B981;color:white;border-color:#10B981"
-                            onclick="togglePublish('${ep.id}', true)">
-                            <i class="fas fa-globe"></i> Publish
-                        </button>`;
+                        const publishBtn = ep.published
+                            ? `<button class="btn-secondary"
+                                style="background:#EF4444;color:white;border-color:#EF4444"
+                                onclick="togglePublish('${ep.id}', false)">
+                                <i class="fas fa-eye-slash"></i> Unpublish
+                            </button>`
+                            : `<button class="btn-secondary"
+                                style="background:#10B981;color:white;border-color:#10B981"
+                                onclick="togglePublish('${ep.id}', true)">
+                                <i class="fas fa-globe"></i> Publish
+                            </button>`;
 
+                        return `
+                        <div class="endpoint-card">
+                            <div class="endpoint-header">
+                                <span class="method-badge ${methodClass}">${ep.method}</span>
+                            </div>
+                            <div class="endpoint-path">${ep.path}</div>
+                            <div class="endpoint-description">${ep.description}</div>
 
-                return `
-                <div class="endpoint-card">
-                    <div class="endpoint-header">
-                        <span class="method-badge ${methodClass}">${ep.method}</span>
-                    </div>
-                    <div class="endpoint-path">${ep.path}</div>
-                    <div class="endpoint-description">${ep.description}</div>
+                            <div class="endpoint-actions">
+                                <button class="btn-secondary" onclick="window.open('${fullUrl}', '_blank')">
+                                    <i class="fas fa-flask"></i> Test
+                                </button>
 
-                    <div class="endpoint-actions">
-                        <button class="btn-secondary" onclick="window.open('${fullUrl}', '_blank')">
-                            <i class="fas fa-flask"></i> Test
-                        </button>
+                                <button class="btn-secondary" onclick="copyToClipboard('${fullUrl}')">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
 
-                        <button class="btn-secondary" onclick="copyToClipboard('${fullUrl}')">
-                            <i class="fas fa-copy"></i> Copy
-                        </button>
+                                ${ep.schema ? `
+                                <button class="btn-secondary"
+                                    onclick="openDataManager('${ep.id}')"
+                                    style="background: var(--purple); color: white; border-color: var(--purple);">
+                                    <i class="fas fa-database"></i> Manage Data
+                                </button>` : ''}
 
-                        ${ep.schema ? `
-                        <button class="btn-secondary"
-                            onclick="openDataManager('${ep.id}')"
-                            style="background: var(--purple); color: white; border-color: var(--purple);">
-                            <i class="fas fa-database"></i> Manage Data
-                        </button>` : ''}
-
-                        ${publishBtn}
-                    </div>
-                </div>`;
-            }).join('');
-        } else {
-            noEndpoints.classList.remove('hidden');
-            endpointCount.textContent = '0 / 10';
-            list.innerHTML = '';
-        }
-    } catch (err) {
-        console.error('Error loading endpoints:', err);
-    }
-}
-
-// 🆕 MARKETPLACE - Publish/Unpublish
-async function togglePublish(endpointId, publish) {
-    console.log('🟢 togglePublish ejecutada:', { endpointId, publish });
-    
-    const confirmMsg = publish
-        ? 'Publish this API to the public marketplace?'
-        : 'Remove this API from the marketplace?';
-
-    if (!confirm(confirmMsg)) {
-        console.log('❌ Cancelado por el usuario');
-        return;
-    }
-
-    console.log('🔵 Actualizando Supabase...');
-
-    try {
-        const { error } = await supabase
-            .from('endpoints')
-            .update({ published: publish })
-            .eq('id', endpointId);
-
-        console.log('🟡 Respuesta Supabase:', { error });
-
-        if (error) {
-            console.error('❌ Error:', error);
-            alert('Error updating visibility: ' + error.message);
-            return;
+                                ${publishBtn}
+                            </div>
+                        </div>`;
+                    }).join('');
+                } else {
+                    noEndpoints.classList.remove('hidden');
+                    endpointCount.textContent = '0 / 10';
+                    list.innerHTML = '';
+                }
+            } catch (err) {
+                console.error('Error loading endpoints:', err);
+            }
         }
 
-        console.log('✅ Éxito! Recargando endpoints...');
-        await cargarEndpoints();
-        
-    } catch (err) {
-        console.error('❌ Exception:', err);
-        alert('Error: ' + err.message);
-    }
-}
-    cargarEndpoints();
-}
+        async function togglePublish(endpointId, publish) {
+            console.log('🟢 togglePublish ejecutada:', { endpointId, publish });
+            
+            const confirmMsg = publish
+                ? 'Publish this API to the public marketplace?'
+                : 'Remove this API from the marketplace?';
+
+            if (!confirm(confirmMsg)) {
+                console.log('❌ Cancelado por el usuario');
+                return;
+            }
+
+            console.log('🔵 Actualizando Supabase...');
+
+            try {
+                const { error } = await supabase
+                    .from('endpoints')
+                    .update({ published: publish })
+                    .eq('id', endpointId);
+
+                console.log('🟡 Respuesta Supabase:', { error });
+
+                if (error) {
+                    console.error('❌ Error:', error);
+                    alert('Error updating visibility: ' + error.message);
+                    return;
+                }
+
+                console.log('✅ Éxito! Recargando endpoints...');
+                await cargarEndpoints();
+                
+            } catch (err) {
+                console.error('❌ Exception:', err);
+                alert('Error: ' + err.message);
+            }
+        }
 
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
@@ -1390,16 +1384,16 @@ async function togglePublish(endpointId, publish) {
         }
 
         function openCreateItemModal() {
-    if (!currentDataEndpoint || !currentDataEndpoint.schema) {
-        alert('No endpoint selected or schema not available');
-        return;
-    }
-    
-    editingItemId = null;
-    document.getElementById('itemModalTitle').textContent = 'Add New Item';
-    buildItemForm();
-    document.getElementById('itemModal').classList.remove('hidden');
-}
+            if (!currentDataEndpoint || !currentDataEndpoint.schema) {
+                alert('No endpoint selected or schema not available');
+                return;
+            }
+            
+            editingItemId = null;
+            document.getElementById('itemModalTitle').textContent = 'Add New Item';
+            buildItemForm();
+            document.getElementById('itemModal').classList.remove('hidden');
+        }
 
         function openEditItemModal(itemId) {
             editingItemId = itemId;
@@ -1409,42 +1403,42 @@ async function togglePublish(endpointId, publish) {
         }
 
         function buildItemForm(itemId = null) {
-    const form = document.getElementById('itemForm');
-    
-    if (!currentDataEndpoint || !currentDataEndpoint.schema) {
-        form.innerHTML = '<p style="color: red;">Error: No schema available</p>';
-        return;
-    }
-    
-    const fields = currentDataEndpoint.schema.fields || [];
-    
-    if (fields.length === 0) {
-        form.innerHTML = '<p style="color: var(--text-secondary);">No fields defined in schema</p>';
-        return;
-    }
-    
-    let itemData = {};
-    if (itemId) {
-        const item = currentDataItems.find(i => i.id === itemId);
-        itemData = item?.data || {};
-    }
+            const form = document.getElementById('itemForm');
+            
+            if (!currentDataEndpoint || !currentDataEndpoint.schema) {
+                form.innerHTML = '<p style="color: red;">Error: No schema available</p>';
+                return;
+            }
+            
+            const fields = currentDataEndpoint.schema.fields || [];
+            
+            if (fields.length === 0) {
+                form.innerHTML = '<p style="color: var(--text-secondary);">No fields defined in schema</p>';
+                return;
+            }
+            
+            let itemData = {};
+            if (itemId) {
+                const item = currentDataItems.find(i => i.id === itemId);
+                itemData = item?.data || {};
+            }
 
-    form.innerHTML = fields.map(field => `
-        <div class="form-group">
-            <label class="form-label">
-                ${field.name}${field.required ? ' *' : ''}
-            </label>
-            <input 
-                type="${field.type === 'number' ? 'number' : 'text'}" 
-                name="${field.name}"
-                class="form-input"
-                value="${itemData[field.name] || ''}"
-                ${field.required ? 'required' : ''}
-                placeholder="Enter ${field.name}"
-            >
-        </div>
-    `).join('');
-}
+            form.innerHTML = fields.map(field => `
+                <div class="form-group">
+                    <label class="form-label">
+                        ${field.name}${field.required ? ' *' : ''}
+                    </label>
+                    <input 
+                        type="${field.type === 'number' ? 'number' : 'text'}" 
+                        name="${field.name}"
+                        class="form-input"
+                        value="${itemData[field.name] || ''}"
+                        ${field.required ? 'required' : ''}
+                        placeholder="Enter ${field.name}"
+                    >
+                </div>
+            `).join('');
+        }
 
         async function saveItem() {
             const form = document.getElementById('itemForm');
