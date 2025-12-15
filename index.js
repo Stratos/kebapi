@@ -928,7 +928,7 @@ app.post('/api/generate-docs', async (req, res) => {
       return res.status(400).json({ error: 'Prompt is required' });
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-8b' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     const result = await model.generateContent(prompt);
     const documentation = result.response.text();
     
@@ -964,5 +964,31 @@ app.post('/api/reload-endpoints', async (req, res) => {
       success: false, 
       error: error.message 
     });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+// 🔍 LIST AVAILABLE GEMINI MODELS (temporary debug endpoint)
+// ═══════════════════════════════════════════════════════════
+app.get('/api/list-models', async (req, res) => {
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY}`);
+    const data = await response.json();
+    
+    const availableModels = data.models
+      .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
+      .map(m => ({
+        name: m.name,
+        displayName: m.displayName,
+        description: m.description
+      }));
+    
+    res.json({
+      success: true,
+      total: availableModels.length,
+      models: availableModels
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
