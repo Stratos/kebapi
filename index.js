@@ -758,5 +758,43 @@ async function iniciar() {
     }, 500);
   }
 }
+// ═══════════════════════════════════════════════════════════
+// 🌍 MARKETPLACE – APIs públicas
+// ═══════════════════════════════════════════════════════════
+
+app.get('/api/marketplace', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('endpoints')
+      .select(`
+        id,
+        path,
+        method,
+        description,
+        createdAt,
+        user_id,
+        schema
+      `)
+      .eq('is_public', true)
+      .order('createdAt', { ascending: false });
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      apis: data.map(ep => ({
+        id: ep.id,
+        method: ep.method,
+        path: `/api${ep.path}`,
+        description: ep.description,
+        hasSchema: !!ep.schema,
+        createdAt: ep.createdAt
+      }))
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 iniciar();
