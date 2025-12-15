@@ -13,333 +13,325 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            background: #f7f9fb;
-            color: #1a202c;
-            line-height: 1.5;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+            background: #f5f5f5;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            background: #f5f5f5;
+            padding: 12px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .welcome {
+            font-weight: 500;
+        }
+
+        .top-nav {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .top-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #1a1a1a;
+            text-decoration: none;
+            font-weight: 400;
+            transition: color 0.2s;
+        }
+
+        .top-nav-item:hover {
+            color: #FF5722;
+        }
+
+        .top-nav-item::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: #1a1a1a;
+            border-radius: 50%;
+        }
+
+        .top-nav-item.active::before {
+            background: #FF5722;
+        }
+
+        .top-nav-item.active {
+            font-weight: 500;
         }
 
         /* Header */
         .header {
-            background: white;
-            border-bottom: 1px solid #e2e8f0;
-            padding: 12px 24px;
+            padding: 40px 32px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 100;
         }
 
         .logo {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 18px;
-            font-weight: 700;
-            color: #1a202c;
+            font-size: 24px;
+            font-weight: 300;
+            letter-spacing: 8px;
+            color: #1a1a1a;
+            text-transform: uppercase;
         }
 
-        .logo-icon {
-            width: 28px;
-            height: 28px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 6px;
+        /* Hero Section */
+        .hero {
+            margin: 0 32px 60px;
+            background: #1a1a1a;
+            border-radius: 24px;
+            padding: 80px 60px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            margin-bottom: 40px;
+            opacity: 0.7;
+        }
+
+        .hero-tag::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: white;
+            border-radius: 50%;
+        }
+
+        .hero-subtitle {
+            font-size: 14px;
+            opacity: 0.7;
+            margin-bottom: 40px;
+        }
+
+        .hero-title {
+            font-size: 72px;
+            font-weight: 300;
+            margin-bottom: 24px;
+            line-height: 1.1;
+        }
+
+        .hero-description {
+            font-size: 16px;
+            line-height: 1.8;
+            max-width: 600px;
+            opacity: 0.9;
+        }
+
+        .hero-nav {
+            position: absolute;
+            bottom: 40px;
+            right: 60px;
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-size: 14px;
-        }
-
-        .search-box {
-            flex: 1;
-            max-width: 500px;
-            margin: 0 40px;
-            position: relative;
-        }
-
-        .search-box input {
-            width: 100%;
-            padding: 8px 16px 8px 40px;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            font-size: 14px;
-            background: #f7f9fb;
-        }
-
-        .search-box input:focus {
-            outline: none;
-            border-color: #667eea;
-            background: white;
-        }
-
-        .search-box i {
-            position: absolute;
-            left: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #a0aec0;
-            font-size: 14px;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 16px;
-            align-items: center;
-        }
-
-        .header-btn {
-            padding: 8px 16px;
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            font-size: 14px;
-            color: #4a5568;
             cursor: pointer;
-            text-decoration: none;
+            transition: all 0.3s;
         }
 
-        .header-btn:hover {
-            border-color: #cbd5e0;
+        .hero-nav:hover {
+            background: rgba(255, 87, 34, 0.2);
+            transform: scale(1.1);
         }
 
-        .btn-primary {
-            background: #667eea;
+        .hero-nav i {
             color: white;
-            border: none;
-        }
-
-        .btn-primary:hover {
-            background: #5a67d8;
-        }
-
-        /* Layout */
-        .container {
-            display: flex;
-            min-height: calc(100vh - 53px);
-        }
-
-        /* Sidebar */
-        .sidebar {
-            width: 260px;
-            background: white;
-            border-right: 1px solid #e2e8f0;
-            padding: 20px 0;
-            position: sticky;
-            top: 53px;
-            height: calc(100vh - 53px);
-            overflow-y: auto;
-        }
-
-        .sidebar-section {
-            margin-bottom: 24px;
-            padding: 0 16px;
-        }
-
-        .sidebar-title {
-            font-size: 11px;
-            font-weight: 600;
-            color: #718096;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 12px;
-        }
-
-        .sidebar-item {
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 14px;
-            color: #4a5568;
-            cursor: pointer;
-            margin-bottom: 2px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .sidebar-item:hover {
-            background: #f7f9fb;
-        }
-
-        .sidebar-item.active {
-            background: #667eea;
-            color: white;
+            font-size: 18px;
         }
 
         /* Main Content */
-        .main {
-            flex: 1;
-            padding: 24px 32px;
-            max-width: 1400px;
+        .container {
+            padding: 0 32px 80px;
         }
 
-        .breadcrumb {
+        /* Section Header */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 60px;
+        }
+
+        .section-title {
+            font-size: 48px;
+            font-weight: 300;
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            color: #718096;
-            margin-bottom: 24px;
+            gap: 16px;
         }
 
-        .breadcrumb a {
-            color: #718096;
-            text-decoration: none;
+        .section-count {
+            width: 32px;
+            height: 32px;
+            background: #1a1a1a;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 500;
         }
 
-        .breadcrumb a:hover {
-            color: #667eea;
-        }
-
-        .breadcrumb i {
-            font-size: 10px;
-        }
-
-        .main-title {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 32px;
-            color: #1a202c;
+        .section-description {
+            max-width: 500px;
+            font-size: 15px;
+            color: #666;
+            line-height: 1.8;
         }
 
         /* API Grid */
         .api-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
         }
 
         .api-card {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 20px;
+            background: #e8e8e8;
+            border-radius: 20px;
+            padding: 48px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s;
             position: relative;
         }
 
         .api-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            border-color: #cbd5e0;
+            background: #dcdcdc;
+            transform: translateY(-4px);
         }
 
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 16px;
-        }
-
-        .card-category {
-            display: inline-block;
-            padding: 4px 10px;
-            background: #edf2f7;
-            color: #4a5568;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: capitalize;
-        }
-
-        .card-favorite {
-            color: #cbd5e0;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        .card-favorite:hover {
-            color: #f56565;
-        }
-
-        .card-logo {
-            width: 48px;
-            height: 48px;
-            border-radius: 8px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .api-card::after {
+            content: '';
+            position: absolute;
+            bottom: 32px;
+            right: 32px;
+            width: 40px;
+            height: 40px;
+            background: #1a1a1a;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
+        }
+
+        .api-card:hover::after {
+            background: #FF5722;
+        }
+
+        .api-icon {
+            width: 56px;
+            height: 56px;
+            background: #bbb;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
             font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 32px;
+        }
+
+        .api-title {
             font-size: 18px;
-            margin-bottom: 12px;
-        }
-
-        .card-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #1a202c;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .verified-badge {
-            color: #48bb78;
-            font-size: 14px;
-        }
-
-        .card-description {
-            font-size: 13px;
-            color: #718096;
-            line-height: 1.5;
+            font-weight: 500;
             margin-bottom: 16px;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            min-height: 40px;
+            color: #1a1a1a;
         }
 
-        .card-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 12px;
-            border-top: 1px solid #f7f9fb;
-            font-size: 12px;
-            color: #a0aec0;
+        .api-description {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.7;
         }
 
-        .card-author {
-            color: #718096;
+        /* Stats Box */
+        .stats-box {
+            position: fixed;
+            bottom: 40px;
+            left: 32px;
+            background: white;
+            border-radius: 16px;
+            padding: 24px 32px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            z-index: 100;
         }
 
-        .card-meta {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-
-        .card-meta span {
+        .stats-number {
+            font-size: 32px;
+            font-weight: 300;
+            color: #1a1a1a;
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 8px;
+            margin-bottom: 4px;
         }
 
-        .card-meta i {
-            font-size: 11px;
+        .stats-dot {
+            width: 8px;
+            height: 8px;
+            background: #FF5722;
+            border-radius: 50%;
+        }
+
+        .stats-label {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .stats-dots {
+            display: flex;
+            gap: 6px;
+            margin-top: 12px;
+        }
+
+        .stats-dots span {
+            width: 6px;
+            height: 6px;
+            background: #ddd;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .stats-dots span.active {
+            background: #1a1a1a;
         }
 
         /* Loading */
         .loading {
             text-align: center;
-            padding: 60px;
-            color: #a0aec0;
+            padding: 100px 20px;
         }
 
         .spinner {
             width: 40px;
             height: 40px;
-            border: 3px solid #e2e8f0;
-            border-top-color: #667eea;
+            border: 3px solid #e8e8e8;
+            border-top-color: #FF5722;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
-            margin: 0 auto 16px;
+            margin: 0 auto 20px;
         }
 
         @keyframes spin {
@@ -349,128 +341,117 @@
         /* Empty State */
         .empty-state {
             text-align: center;
-            padding: 80px 20px;
-        }
-
-        .empty-icon {
-            width: 64px;
-            height: 64px;
-            margin: 0 auto 16px;
-            background: #f7f9fb;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #cbd5e0;
-            font-size: 28px;
+            padding: 100px 20px;
         }
 
         .empty-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #4a5568;
-            margin-bottom: 8px;
+            font-size: 32px;
+            font-weight: 300;
+            color: #1a1a1a;
+            margin-bottom: 16px;
         }
 
         .empty-description {
-            font-size: 14px;
-            color: #a0aec0;
+            font-size: 16px;
+            color: #666;
         }
 
         .hidden {
             display: none !important;
         }
+
+        /* Arrow for cards */
+        .api-card::before {
+            content: '→';
+            position: absolute;
+            bottom: 32px;
+            right: 42px;
+            font-size: 18px;
+            color: white;
+            z-index: 1;
+        }
     </style>
 </head>
 <body>
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="welcome">Welcome</div>
+        <nav class="top-nav">
+            <a href="/" class="top-nav-item active">Home</a>
+            <a href="/marketplace.html" class="top-nav-item">Marketplace</a>
+            <a href="/" class="top-nav-item">APIs</a>
+            <a href="/" class="top-nav-item">Docs</a>
+            <a href="/" class="top-nav-item">About</a>
+        </nav>
+        <div style="font-size: 12px; color: #999;">EN</div>
+    </div>
+
     <!-- Header -->
     <header class="header">
-        <div class="logo">
-            <div class="logo-icon">
-                <i class="fas fa-layer-group"></i>
-            </div>
-            <span>Kebapi</span>
-        </div>
-        
-        <div class="search-box">
-            <i class="fas fa-search"></i>
-            <input type="text" id="searchInput" placeholder="Search APIs" onkeyup="filterAPIs()">
-        </div>
-
-        <div class="header-actions">
-            <a href="/" class="header-btn">Dashboard</a>
-            <a href="/" class="header-btn btn-primary">Sign In</a>
-        </div>
+        <div class="logo">KEBAPI</div>
     </header>
 
-    <!-- Container -->
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-tag">Introduction</div>
+        <div class="hero-subtitle">We are API & tech</div>
+        <h1 class="hero-title">We are Kebapi</h1>
+        <p class="hero-description">
+            We are a platform for developers and creators who build, share and discover public APIs.
+            Our approach is simple, our passion is technology and open source.
+        </p>
+        <div class="hero-nav">
+            <i class="fas fa-arrow-right"></i>
+        </div>
+    </section>
+
+    <!-- Main Container -->
     <div class="container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-section">
-                <div class="sidebar-title">Categories</div>
-                <div class="sidebar-item active" onclick="filterByCategory('all')">
-                    <i class="fas fa-globe"></i>
-                    All APIs
-                </div>
-                <div class="sidebar-item" onclick="filterByCategory('data')">
-                    <i class="fas fa-database"></i>
-                    Data
-                </div>
-                <div class="sidebar-item" onclick="filterByCategory('finance')">
-                    <i class="fas fa-dollar-sign"></i>
-                    Finance
-                </div>
-                <div class="sidebar-item" onclick="filterByCategory('weather')">
-                    <i class="fas fa-cloud"></i>
-                    Weather
-                </div>
-                <div class="sidebar-item" onclick="filterByCategory('sports')">
-                    <i class="fas fa-futbol"></i>
-                    Sports
-                </div>
-                <div class="sidebar-item" onclick="filterByCategory('other')">
-                    <i class="fas fa-folder"></i>
-                    Other
-                </div>
-            </div>
-        </aside>
+        <!-- Section Header -->
+        <div class="section-header">
+            <h2 class="section-title">
+                APIs
+                <span class="section-count" id="apiCount">0</span>
+            </h2>
+            <p class="section-description">
+                Browse our collection of public APIs created by developers worldwide.
+                Each API is ready to integrate, documented and actively maintained by the community.
+            </p>
+        </div>
 
-        <!-- Main Content -->
-        <main class="main">
-            <div class="breadcrumb">
-                <a href="/"><i class="fas fa-home"></i></a>
-                <i class="fas fa-chevron-right"></i>
-                <span>All APIs</span>
-            </div>
+        <!-- Loading -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+        </div>
 
-            <h1 class="main-title">All APIs</h1>
+        <!-- API Grid -->
+        <div id="apiGrid" class="api-grid hidden"></div>
 
-            <!-- Loading -->
-            <div id="loading" class="loading">
-                <div class="spinner"></div>
-                <p>Loading APIs...</p>
-            </div>
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state hidden">
+            <h3 class="empty-title">No APIs yet</h3>
+            <p class="empty-description">Be the first to publish an API to the marketplace</p>
+        </div>
+    </div>
 
-            <!-- API Grid -->
-            <div id="apiGrid" class="api-grid hidden"></div>
-
-            <!-- Empty State -->
-            <div id="emptyState" class="empty-state hidden">
-                <div class="empty-icon">
-                    <i class="fas fa-inbox"></i>
-                </div>
-                <div class="empty-title">No APIs found</div>
-                <div class="empty-description">Be the first to publish an API to the marketplace!</div>
-            </div>
-        </main>
+    <!-- Stats Box -->
+    <div class="stats-box">
+        <div class="stats-number">
+            <span class="stats-dot"></span>
+            <span id="statsNumber">0</span>
+        </div>
+        <div class="stats-label">APIs online</div>
+        <div class="stats-dots">
+            <span class="active"></span>
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
     </div>
 
     <script>
         const API_URL = window.location.origin;
         let allAPIs = [];
-        let filteredAPIs = [];
-        let currentCategory = 'all';
 
         async function loadAPIs() {
             try {
@@ -479,8 +460,9 @@
 
                 if (data.success && data.apis && data.apis.length > 0) {
                     allAPIs = data.apis;
-                    filteredAPIs = allAPIs;
                     renderAPIs();
+                    document.getElementById('apiCount').textContent = allAPIs.length;
+                    document.getElementById('statsNumber').textContent = allAPIs.length;
                     document.getElementById('loading').classList.add('hidden');
                 } else {
                     document.getElementById('loading').classList.add('hidden');
@@ -495,91 +477,23 @@
 
         function renderAPIs() {
             const grid = document.getElementById('apiGrid');
-            
-            if (filteredAPIs.length === 0) {
-                grid.classList.add('hidden');
-                document.getElementById('emptyState').classList.remove('hidden');
-                return;
-            }
-
             grid.classList.remove('hidden');
-            document.getElementById('emptyState').classList.add('hidden');
 
-            grid.innerHTML = filteredAPIs.map(api => {
+            grid.innerHTML = allAPIs.map(api => {
                 const fullUrl = `${API_URL}/api${api.path}`;
                 const initials = (api.path.replace('/', '').substring(0, 2) || 'API').toUpperCase();
                 const displayEmail = api.user_email || 'Anonymous';
-                const timeAgo = getTimeAgo(api.createdAt);
                 
                 return `
                     <div class="api-card" onclick="window.open('${fullUrl}', '_blank')">
-                        <div class="card-header">
-                            <span class="card-category">API</span>
-                            <i class="far fa-heart card-favorite" onclick="event.stopPropagation()"></i>
-                        </div>
-                        
-                        <div class="card-logo">${initials}</div>
-                        
-                        <h3 class="card-title">
-                            ${api.path.replace('/', '')}
-                            <i class="fas fa-check-circle verified-badge"></i>
-                        </h3>
-                        
-                        <p class="card-description">${api.description}</p>
-                        
-                        <div class="card-footer">
-                            <span class="card-author">By ${displayEmail.split('@')[0]}</span>
-                            <div class="card-meta">
-                                <span><i class="fas fa-star"></i> 9.9</span>
-                                <span><i class="far fa-clock"></i> ${timeAgo}</span>
-                                <span><i class="fas fa-signal"></i> 100%</span>
-                            </div>
-                        </div>
+                        <div class="api-icon">${initials}</div>
+                        <h3 class="api-title">${api.path.replace('/', '').charAt(0).toUpperCase() + api.path.replace('/', '').slice(1)} API</h3>
+                        <p class="api-description">
+                            ${api.description}
+                        </p>
                     </div>
                 `;
             }).join('');
-        }
-
-        function getTimeAgo(dateString) {
-            const date = new Date(dateString);
-            const now = new Date();
-            const diff = now - date;
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            
-            if (days === 0) return 'Today';
-            if (days === 1) return '1 day ago';
-            if (days < 30) return `${days} days ago`;
-            if (days < 365) return `${Math.floor(days / 30)} months ago`;
-            return `${Math.floor(days / 365)} year ago`;
-        }
-
-        function filterAPIs() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            
-            filteredAPIs = allAPIs.filter(api => {
-                const matchesSearch = !searchTerm || 
-                    api.path.toLowerCase().includes(searchTerm) ||
-                    api.description.toLowerCase().includes(searchTerm) ||
-                    (api.user_email && api.user_email.toLowerCase().includes(searchTerm));
-                
-                return matchesSearch;
-            });
-            
-            renderAPIs();
-        }
-
-        function filterByCategory(category) {
-            currentCategory = category;
-            
-            // Update active state
-            document.querySelectorAll('.sidebar-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            // For now, show all (you can implement category logic later)
-            filteredAPIs = allAPIs;
-            renderAPIs();
         }
 
         loadAPIs();
