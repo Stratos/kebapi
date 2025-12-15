@@ -41,7 +41,6 @@ async function cargarEndpoints() {
       data.forEach(ep => {
         endpoints.set(ep.id, ep);
         
-        // IMPORTANTE: Registrar ruta en Express
         const fullPath = '/api' + ep.path;
         const method = ep.method.toLowerCase();
         
@@ -50,12 +49,32 @@ async function cargarEndpoints() {
           return !(r.route && r.route.path === fullPath && r.route.methods[method]);
         });
         
-        // Registrar nueva ruta
-        app[method](fullPath, (req, res) => {
-          res.json(ep.responseData);
-        });
+        // Si tiene schema, crear ruta dinámica que lea de endpoint_items
+        if (ep.schema) {
+          app[method](fullPath, async (req, res) => {
+            const { data: items, error } = await supabase
+              .from('endpoint_items')
+              .select('*')
+              .eq('endpoint_id', ep.id);
+            
+            if (error) {
+              return res.status(500).json({ error: error.message });
+            }
+            
+            res.json({
+              success: true,
+              data: items.map(item => ({ id: item.id, ...item.data })),
+              total: items.length
+            });
+          });
+        } else {
+          // Si no tiene schema, usar responseData estático (endpoints viejos)
+          app[method](fullPath, (req, res) => {
+            res.json(ep.responseData);
+          });
+        }
         
-        console.log(`✓ Loaded: ${ep.method} ${fullPath}`);
+        console.log(`✓ Loaded: ${ep.method} ${fullPath}${ep.schema ? ' (dynamic)' : ' (static)'}`);
       });
     }
     
@@ -65,7 +84,6 @@ async function cargarEndpoints() {
     return 0;
   }
 }
-
 async function guardarEndpoint(endpoint) {
   try {
     const { data, error } = await supabase
