@@ -400,6 +400,11 @@
             // Playground
             document.getElementById('endpointInput').value = apiData.api.fullUrl;
             updatePlayground();
+            
+            // Custom Documentation
+            if (apiData.documentation) {
+                document.getElementById('markdownContent').innerHTML = marked.parse(apiData.documentation);
+            }
         }
 
         function switchMainTab(tab) {

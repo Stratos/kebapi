@@ -124,6 +124,10 @@
         .btn-delete:hover { background: #DC2626; }
         .btn-edit { padding: 8px 12px; background: #e8e8e8; border: none; border-radius: 8px; font-size: 12px; cursor: pointer; }
         .btn-edit:hover { background: #dcdcdc; }
+        .edit-tab.active { color: #FF5722 !important; border-bottom-color: #FF5722 !important; }
+        .edit-tab:hover { color: #1a1a1a !important; }
+        .edit-tab-panel { display: none; }
+        .edit-tab-panel.active { display: block; }
     </style>
 </head>
 <body>
@@ -261,6 +265,122 @@
                     </div>
                 </div>
 
+                <!-- Edit API Section -->
+                <div id="editSection" class="hidden">
+                    <section class="hero">
+                        <div class="hero-tag" id="editProjectBadge">Project</div>
+                        <div class="hero-subtitle">Edit API</div>
+                        <h1 class="hero-title" id="editApiName">API Name</h1>
+                        <p class="hero-description" id="editApiDescription">Description</p>
+                    </section>
+
+                    <div class="container">
+                        <div id="editAlertContainer"></div>
+
+                        <!-- Tabs for Edit -->
+                        <div style="background: white; border-radius: 12px 12px 0 0; display: flex; border-bottom: 1px solid #e8e8e8; margin-bottom: 0;">
+                            <button class="edit-tab active" onclick="switchEditTab('details')" style="padding: 16px 32px; background: none; border: none; font-size: 15px; font-weight: 500; color: #666; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s;">
+                                <i class="fas fa-edit"></i> Details
+                            </button>
+                            <button class="edit-tab" onclick="switchEditTab('data')" id="dataTabBtn" style="padding: 16px 32px; background: none; border: none; font-size: 15px; font-weight: 500; color: #666; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s;">
+                                <i class="fas fa-database"></i> Data
+                            </button>
+                            <button class="edit-tab" onclick="switchEditTab('docs')" style="padding: 16px 32px; background: none; border: none; font-size: 15px; font-weight: 500; color: #666; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s;">
+                                <i class="fas fa-book"></i> Documentation
+                            </button>
+                        </div>
+
+                        <!-- Tab Panels -->
+                        <div style="background: white; border-radius: 0 0 12px 12px; padding: 48px; margin-bottom: 24px;">
+                            <!-- Details Tab -->
+                            <div id="editTab-details" class="edit-tab-panel">
+                                <div class="form-group">
+                                    <label class="form-label">Project Name</label>
+                                    <input type="text" id="editProjectInput" class="form-input" placeholder="e.g., entertainment">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Endpoint Name</label>
+                                    <input type="text" id="editEndpointInput" class="form-input" placeholder="e.g., movies">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Description</label>
+                                    <textarea id="editDescriptionInput" class="form-textarea" placeholder="Brief description of your API"></textarea>
+                                </div>
+                                <div style="display: flex; gap: 12px;">
+                                    <button class="btn-primary" onclick="saveEditChanges()">
+                                        <i class="fas fa-save"></i> Save Changes
+                                    </button>
+                                    <button class="btn-secondary" onclick="closeEditSection()">
+                                        <i class="fas fa-times"></i> Cancel
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Data Tab -->
+                            <div id="editTab-data" class="edit-tab-panel hidden">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                                    <div>
+                                        <h3 style="font-size: 20px; font-weight: 500; margin-bottom: 4px;">Manage Data</h3>
+                                        <p style="font-size: 14px; color: #666;" id="editDataCount">0 items</p>
+                                    </div>
+                                    <button class="btn-add" onclick="openCreateItemInlineModal()">
+                                        <i class="fas fa-plus"></i> Add New
+                                    </button>
+                                </div>
+                                <div id="editDataTableWrapper">
+                                    <table class="data-table" id="editDataTable">
+                                        <thead id="editDataTableHead"></thead>
+                                        <tbody id="editDataTableBody"></tbody>
+                                    </table>
+                                </div>
+                                <div id="editDataEmpty" class="empty-state hidden">
+                                    <h3 class="empty-title">No data yet</h3>
+                                    <p class="empty-description">Click "Add New" to create your first item</p>
+                                </div>
+                            </div>
+
+                            <!-- Documentation Tab -->
+                            <div id="editTab-docs" class="edit-tab-panel hidden">
+                                <div style="margin-bottom: 24px;">
+                                    <h3 style="font-size: 20px; font-weight: 500; margin-bottom: 8px;">API Documentation</h3>
+                                    <p style="font-size: 14px; color: #666;">Write custom documentation for your API. Supports Markdown.</p>
+                                </div>
+                                <div class="form-group">
+                                    <textarea id="editDocsInput" class="form-textarea" placeholder="# My API Documentation
+
+## Overview
+Describe what your API does...
+
+## Authentication
+Explain how to authenticate...
+
+## Examples
+Provide usage examples..." style="min-height: 400px; font-family: 'Monaco', monospace;"></textarea>
+                                </div>
+                                <div style="display: flex; gap: 12px;">
+                                    <button class="btn-primary" onclick="saveDocumentation()">
+                                        <i class="fas fa-save"></i> Save Documentation
+                                    </button>
+                                    <button class="btn-secondary" onclick="generateDocumentation()">
+                                        <i class="fas fa-wand-magic-sparkles"></i> Generate with AI
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Danger Zone -->
+                        <div style="background: white; border: 2px solid #FEE2E2; border-radius: 12px; padding: 32px;">
+                            <h3 style="font-size: 20px; font-weight: 500; color: #EF4444; margin-bottom: 8px;">
+                                <i class="fas fa-exclamation-triangle"></i> Danger Zone
+                            </h3>
+                            <p style="color: #666; margin-bottom: 24px;">Once you delete an API, there is no going back. Please be certain.</p>
+                            <button class="btn-danger" onclick="deleteEditAPI()">
+                                <i class="fas fa-trash"></i> Delete This API
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="stats-box">
                     <div class="stats-number">
                         <span class="stats-dot"></span>
@@ -394,12 +514,11 @@
                                     const fullUrl = `${API_URL}/api/${ep.project_name}${ep.path}`;
                                     const publishBtn = ep.published ? `<button class="btn-action btn-unpublish" onclick="togglePublish('${ep.id}', false)"><i class="fas fa-eye-slash"></i> Unpublish</button>` : `<button class="btn-action btn-publish" onclick="togglePublish('${ep.id}', true)"><i class="fas fa-globe"></i> Publish</button>`;
                                     return `
-                                        <div class="endpoint-card" onclick="window.open('/api-edit.html?id=${ep.id}', '_blank')">
+                                        <div class="endpoint-card" onclick="openEditAPI('${ep.id}')">
                                             <div class="endpoint-method">${ep.method}</div>
                                             <div class="endpoint-path">${ep.path}</div>
                                             <div class="endpoint-description">${ep.description}</div>
                                             <div class="endpoint-actions" onclick="event.stopPropagation()">
-                                                ${ep.schema ? `<button class="btn-action btn-manage" onclick="openDataManager('${ep.id}')"><i class="fas fa-database"></i> Manage</button>` : ''}
                                                 ${publishBtn}
                                             </div>
                                             <div class="endpoint-card-arrow">
@@ -428,6 +547,283 @@
         function closeDataManagerOnOverlay(event) { if (event.target === event.currentTarget) { closeDataManager(); } }
         function closeItemModal() { document.getElementById('itemModal').classList.add('hidden'); editingItemId = null; }
         function closeItemModalOnOverlay(event) { if (event.target === event.currentTarget) { closeItemModal(); } }
+
+        // ═══════════════════════════════════════════════════════════
+        // EDIT API INLINE FUNCTIONS
+        // ═══════════════════════════════════════════════════════════
+        let currentEditAPI = null;
+        let editDataItems = [];
+
+        function openEditAPI(apiId) {
+            const api = endpoints.get(apiId);
+            if (!api) return;
+            
+            currentEditAPI = api;
+            
+            // Ocultar otras secciones
+            document.getElementById('generatorSection').classList.add('hidden');
+            document.getElementById('endpointsSection').classList.add('hidden');
+            document.getElementById('editSection').classList.remove('hidden');
+            
+            // Actualizar nav
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            
+            // Renderizar datos de la API
+            document.getElementById('editProjectBadge').textContent = api.project_name;
+            document.getElementById('editApiName').textContent = api.path.replace('/', '').toUpperCase() + ' API';
+            document.getElementById('editApiDescription').textContent = api.description;
+            document.getElementById('editProjectInput').value = api.project_name;
+            document.getElementById('editEndpointInput').value = api.path.replace('/', '');
+            document.getElementById('editDescriptionInput').value = api.description;
+            document.getElementById('editDocsInput').value = api.documentation || '';
+            
+            // Mostrar/ocultar tab de datos
+            if (api.schema) {
+                document.getElementById('dataTabBtn').style.display = 'block';
+                loadEditDataItems();
+            } else {
+                document.getElementById('dataTabBtn').style.display = 'none';
+            }
+            
+            // Resetear a primera tab
+            switchEditTab('details');
+        }
+
+        function closeEditSection() {
+            document.getElementById('editSection').classList.add('hidden');
+            document.getElementById('endpointsSection').classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.nav-item')[1].classList.add('active');
+            currentEditAPI = null;
+        }
+
+        function switchEditTab(tab) {
+            document.querySelectorAll('.edit-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.edit-tab-panel').forEach(p => p.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(`editTab-${tab}`).classList.add('active');
+            
+            if (tab === 'data' && currentEditAPI && currentEditAPI.schema) {
+                loadEditDataItems();
+            }
+        }
+
+        async function saveEditChanges() {
+            const project_name = document.getElementById('editProjectInput').value.trim();
+            const endpoint_name = document.getElementById('editEndpointInput').value.trim();
+            const description = document.getElementById('editDescriptionInput').value.trim();
+
+            if (!project_name || !endpoint_name || !description) {
+                showEditAlert('All fields are required', 'error');
+                return;
+            }
+
+            const new_path = `/${endpoint_name}`;
+
+            try {
+                const { error } = await supabase
+                    .from('endpoints')
+                    .update({
+                        project_name: project_name,
+                        path: new_path,
+                        description: description
+                    })
+                    .eq('id', currentEditAPI.id);
+
+                if (error) throw error;
+
+                showEditAlert('Changes saved successfully!', 'success');
+                await cargarEndpoints();
+                
+                // Actualizar currentEditAPI
+                currentEditAPI.project_name = project_name;
+                currentEditAPI.path = new_path;
+                currentEditAPI.description = description;
+                
+                // Actualizar hero
+                document.getElementById('editProjectBadge').textContent = project_name;
+                document.getElementById('editApiName').textContent = endpoint_name.toUpperCase() + ' API';
+                document.getElementById('editApiDescription').textContent = description;
+
+            } catch (error) {
+                console.error('Error:', error);
+                showEditAlert('Error saving changes: ' + error.message, 'error');
+            }
+        }
+
+        async function loadEditDataItems() {
+            const wrapper = document.getElementById('editDataTableWrapper');
+            const empty = document.getElementById('editDataEmpty');
+            
+            wrapper.style.display = 'none';
+            empty.classList.add('hidden');
+            
+            const { data, error } = await supabase
+                .from('endpoint_items')
+                .select('*')
+                .eq('endpoint_id', currentEditAPI.id)
+                .order('created_at', { ascending: false });
+            
+            if (error) {
+                showEditAlert('Error loading data: ' + error.message, 'error');
+                return;
+            }
+            
+            editDataItems = data || [];
+            
+            if (editDataItems.length === 0) {
+                empty.classList.remove('hidden');
+                document.getElementById('editDataCount').textContent = 'No items';
+            } else {
+                wrapper.style.display = 'block';
+                document.getElementById('editDataCount').textContent = `${editDataItems.length} item${editDataItems.length !== 1 ? 's' : ''}`;
+                renderEditDataTable();
+            }
+        }
+
+        function renderEditDataTable() {
+            const thead = document.getElementById('editDataTableHead');
+            const tbody = document.getElementById('editDataTableBody');
+            const fields = currentEditAPI.schema?.fields || [];
+            const sampleItem = editDataItems[0]?.data || {};
+            const fieldNames = fields.length > 0 ? fields.map(f => f.name) : Object.keys(sampleItem);
+            
+            thead.innerHTML = `<tr>${fieldNames.map(field => `<th>${field}</th>`).join('')}<th style="width: 140px;">Actions</th></tr>`;
+            tbody.innerHTML = editDataItems.map(item => `<tr>${fieldNames.map(field => {
+                const value = item.data[field];
+                const displayValue = typeof value === 'object' ? JSON.stringify(value) : (value !== undefined && value !== null ? value : '-');
+                const truncated = String(displayValue).length > 50 ? String(displayValue).substring(0, 50) + '...' : displayValue;
+                return `<td title="${String(displayValue)}">${truncated}</td>`;
+            }).join('')}<td><div style="display: flex; gap: 8px;"><button onclick="openEditItemInlineModal('${item.id}')" class="btn-edit"><i class="fas fa-edit"></i></button><button onclick="deleteEditDataItem('${item.id}')" class="btn-delete"><i class="fas fa-trash"></i></button></div></td></tr>`).join('');
+        }
+
+        function openCreateItemInlineModal() {
+            editingItemId = null;
+            document.getElementById('itemModalTitle').textContent = 'Add New Item';
+            buildItemForm();
+            document.getElementById('itemModal').classList.remove('hidden');
+        }
+
+        function openEditItemInlineModal(itemId) {
+            editingItemId = itemId;
+            document.getElementById('itemModalTitle').textContent = 'Edit Item';
+            buildItemFormEdit(itemId);
+            document.getElementById('itemModal').classList.remove('hidden');
+        }
+
+        function buildItemFormEdit(itemId = null) {
+            const form = document.getElementById('itemForm');
+            const fields = currentEditAPI.schema?.fields || [];
+            let itemData = {};
+            if (itemId) {
+                const item = editDataItems.find(i => i.id === itemId);
+                itemData = item?.data || {};
+            }
+            form.innerHTML = fields.map(field => `<div class="form-group"><label class="form-label">${field.name}${field.required ? ' *' : ''}</label><input type="${field.type === 'number' ? 'number' : 'text'}" name="${field.name}" class="form-input" value="${itemData[field.name] || ''}" ${field.required ? 'required' : ''} placeholder="Enter ${field.name}"></div>`).join('');
+        }
+
+        async function deleteEditDataItem(itemId) {
+            if (!confirm('Delete this item?')) return;
+            const { error } = await supabase.from('endpoint_items').delete().eq('id', itemId);
+            if (error) {
+                showEditAlert('Error: ' + error.message, 'error');
+                return;
+            }
+            loadEditDataItems();
+        }
+
+        async function saveDocumentation() {
+            const docs = document.getElementById('editDocsInput').value.trim();
+            
+            try {
+                const { error } = await supabase
+                    .from('endpoints')
+                    .update({ documentation: docs })
+                    .eq('id', currentEditAPI.id);
+
+                if (error) throw error;
+
+                showEditAlert('Documentation saved!', 'success');
+                currentEditAPI.documentation = docs;
+
+            } catch (error) {
+                showEditAlert('Error: ' + error.message, 'error');
+            }
+        }
+
+        async function generateDocumentation() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            
+            try {
+                // Crear prompt para IA
+                const prompt = `Generate comprehensive API documentation in Markdown format for this API:
+
+Name: ${currentEditAPI.path.replace('/', '')}
+Description: ${currentEditAPI.description}
+Project: ${currentEditAPI.project_name}
+${currentEditAPI.schema ? `Schema: ${JSON.stringify(currentEditAPI.schema.fields, null, 2)}` : ''}
+
+Include:
+- Overview
+- Authentication (if needed)
+- Endpoints
+- Request/Response examples
+- Error handling
+- Rate limits (if applicable)
+
+Write in a professional, clear style.`;
+
+                const response = await fetch(`${API_URL}/api/generate-docs`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, apiData: currentEditAPI })
+                });
+
+                const data = await response.json();
+                
+                if (!response.ok) throw new Error(data.error || 'Error generating docs');
+                
+                document.getElementById('editDocsInput').value = data.documentation;
+                showEditAlert('Documentation generated! Review and save.', 'success');
+
+            } catch (error) {
+                showEditAlert('Error: ' + error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> Generate with AI';
+            }
+        }
+
+        async function deleteEditAPI() {
+            if (!confirm('Are you ABSOLUTELY sure? This action cannot be undone.')) return;
+            if (!confirm('Last warning: This will permanently delete this API and all its data. Continue?')) return;
+
+            try {
+                await supabase.from('endpoint_items').delete().eq('endpoint_id', currentEditAPI.id);
+                const { error } = await supabase.from('endpoints').delete().eq('id', currentEditAPI.id);
+                if (error) throw error;
+
+                showEditAlert('API deleted successfully', 'success');
+                
+                setTimeout(() => {
+                    closeEditSection();
+                    cargarEndpoints();
+                }, 1500);
+
+            } catch (error) {
+                showEditAlert('Error: ' + error.message, 'error');
+            }
+        }
+
+        function showEditAlert(message, type) {
+            const container = document.getElementById('editAlertContainer');
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
 
         init();
     </script>

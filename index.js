@@ -858,6 +858,7 @@ app.get('/api/docs/:project/:endpoint', async (req, res) => {
       },
       schema: data.schema || null,
       sampleData: sampleData,
+      documentation: data.documentation || null,
       examples: {
         curl: `curl -X ${data.method} "${baseUrl}${fullPath}"`,
         javascript: `fetch("${baseUrl}${fullPath}")
@@ -912,6 +913,35 @@ print(data)`
     res.status(500).json({
       success: false,
       error: err.message
+    });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+// 🤖 GENERATE API DOCUMENTATION WITH AI
+// ═══════════════════════════════════════════════════════════
+app.post('/api/generate-docs', async (req, res) => {
+  try {
+    const { prompt, apiData } = req.body;
+    
+    if (!prompt) {
+      return res.status(400).json({ error: 'Prompt is required' });
+    }
+
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+    const result = await model.generateContent(prompt);
+    const documentation = result.response.text();
+    
+    res.json({
+      success: true,
+      documentation: documentation.replace(/```markdown/g, '').replace(/```/g, '').trim()
+    });
+
+  } catch (error) {
+    console.error('Error generating docs:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error generating documentation'
     });
   }
 });
