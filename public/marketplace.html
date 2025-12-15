@@ -132,6 +132,44 @@
             line-height: 1.8;
             max-width: 600px;
             opacity: 0.9;
+            margin-bottom: 40px;
+        }
+
+        /* Search in Hero */
+        .hero-search {
+            max-width: 500px;
+            position: relative;
+        }
+
+        .hero-search input {
+            width: 100%;
+            padding: 16px 20px 16px 50px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .hero-search input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .hero-search input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .hero-search i {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 16px;
         }
 
         .hero-nav {
@@ -221,8 +259,7 @@
             transform: translateY(-4px);
         }
 
-        .api-card::after {
-            content: '';
+        .api-card-arrow {
             position: absolute;
             bottom: 32px;
             right: 32px;
@@ -233,10 +270,16 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.3s;
         }
 
-        .api-card:hover::after {
+        .api-card:hover .api-card-arrow {
             background: #FF5722;
+        }
+
+        .api-card-arrow i {
+            color: white;
+            font-size: 16px;
         }
 
         .api-icon {
@@ -359,17 +402,6 @@
         .hidden {
             display: none !important;
         }
-
-        /* Arrow for cards */
-        .api-card::before {
-            content: '→';
-            position: absolute;
-            bottom: 32px;
-            right: 42px;
-            font-size: 18px;
-            color: white;
-            z-index: 1;
-        }
     </style>
 </head>
 <body>
@@ -377,8 +409,8 @@
     <div class="top-bar">
         <div class="welcome">Welcome</div>
         <nav class="top-nav">
-            <a href="/" class="top-nav-item active">Home</a>
-            <a href="/marketplace.html" class="top-nav-item">Marketplace</a>
+            <a href="/" class="top-nav-item">Home</a>
+            <a href="/marketplace.html" class="top-nav-item active">Marketplace</a>
             <a href="/" class="top-nav-item">APIs</a>
             <a href="/" class="top-nav-item">Docs</a>
             <a href="/" class="top-nav-item">About</a>
@@ -400,6 +432,12 @@
             We are a platform for developers and creators who build, share and discover public APIs.
             Our approach is simple, our passion is technology and open source.
         </p>
+        
+        <div class="hero-search">
+            <i class="fas fa-search"></i>
+            <input type="text" id="heroSearch" placeholder="Search APIs..." onkeyup="filterAPIs()">
+        </div>
+        
         <div class="hero-nav">
             <i class="fas fa-arrow-right"></i>
         </div>
@@ -452,6 +490,7 @@
     <script>
         const API_URL = window.location.origin;
         let allAPIs = [];
+        let filteredAPIs = [];
 
         async function loadAPIs() {
             try {
@@ -460,6 +499,7 @@
 
                 if (data.success && data.apis && data.apis.length > 0) {
                     allAPIs = data.apis;
+                    filteredAPIs = allAPIs;
                     renderAPIs();
                     document.getElementById('apiCount').textContent = allAPIs.length;
                     document.getElementById('statsNumber').textContent = allAPIs.length;
@@ -477,9 +517,17 @@
 
         function renderAPIs() {
             const grid = document.getElementById('apiGrid');
-            grid.classList.remove('hidden');
+            
+            if (filteredAPIs.length === 0) {
+                grid.classList.add('hidden');
+                document.getElementById('emptyState').classList.remove('hidden');
+                return;
+            }
 
-            grid.innerHTML = allAPIs.map(api => {
+            grid.classList.remove('hidden');
+            document.getElementById('emptyState').classList.add('hidden');
+
+            grid.innerHTML = filteredAPIs.map(api => {
                 const fullUrl = `${API_URL}/api${api.path}`;
                 const initials = (api.path.replace('/', '').substring(0, 2) || 'API').toUpperCase();
                 const displayEmail = api.user_email || 'Anonymous';
@@ -488,12 +536,29 @@
                     <div class="api-card" onclick="window.open('${fullUrl}', '_blank')">
                         <div class="api-icon">${initials}</div>
                         <h3 class="api-title">${api.path.replace('/', '').charAt(0).toUpperCase() + api.path.replace('/', '').slice(1)} API</h3>
-                        <p class="api-description">
-                            ${api.description}
-                        </p>
+                        <p class="api-description">${api.description}</p>
+                        <div class="api-card-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
                     </div>
                 `;
             }).join('');
+        }
+
+        function filterAPIs() {
+            const searchTerm = document.getElementById('heroSearch').value.toLowerCase();
+            
+            if (!searchTerm) {
+                filteredAPIs = allAPIs;
+            } else {
+                filteredAPIs = allAPIs.filter(api => 
+                    api.path.toLowerCase().includes(searchTerm) ||
+                    api.description.toLowerCase().includes(searchTerm) ||
+                    (api.user_email && api.user_email.toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            renderAPIs();
         }
 
         loadAPIs();
