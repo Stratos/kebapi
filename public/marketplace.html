@@ -6,406 +6,64 @@
     <title>Kebapi Marketplace</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
-            background: #f5f5f5;
-            color: #1a1a1a;
-            line-height: 1.6;
-        }
-
-        /* Top Bar */
-        .top-bar {
-            background: #f5f5f5;
-            padding: 12px 32px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 13px;
-            color: #666;
-        }
-
-        .welcome {
-            font-weight: 500;
-        }
-
-        .top-nav {
-            display: flex;
-            gap: 24px;
-            align-items: center;
-        }
-
-        .top-nav-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #1a1a1a;
-            text-decoration: none;
-            font-weight: 400;
-            transition: color 0.2s;
-        }
-
-        .top-nav-item:hover {
-            color: #FF5722;
-        }
-
-        .top-nav-item::before {
-            content: '';
-            width: 6px;
-            height: 6px;
-            background: #1a1a1a;
-            border-radius: 50%;
-        }
-
-        .top-nav-item.active::before {
-            background: #FF5722;
-        }
-
-        .top-nav-item.active {
-            font-weight: 500;
-        }
-
-        /* Header */
-        .header {
-            padding: 40px 32px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .logo {
-            font-size: 24px;
-            font-weight: 300;
-            letter-spacing: 8px;
-            color: #1a1a1a;
-            text-transform: uppercase;
-        }
-
-        /* Hero Section */
-        .hero {
-            margin: 0 32px 60px;
-            background: #1a1a1a;
-            border-radius: 24px;
-            padding: 80px 60px;
-            color: white;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hero-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-            margin-bottom: 40px;
-            opacity: 0.7;
-        }
-
-        .hero-tag::before {
-            content: '';
-            width: 6px;
-            height: 6px;
-            background: white;
-            border-radius: 50%;
-        }
-
-        .hero-subtitle {
-            font-size: 14px;
-            opacity: 0.7;
-            margin-bottom: 40px;
-        }
-
-        .hero-title {
-            font-size: 72px;
-            font-weight: 300;
-            margin-bottom: 24px;
-            line-height: 1.1;
-        }
-
-        .hero-description {
-            font-size: 16px;
-            line-height: 1.8;
-            max-width: 600px;
-            opacity: 0.9;
-            margin-bottom: 40px;
-        }
-
-        /* Search in Hero */
-        .hero-search {
-            max-width: 500px;
-            position: relative;
-        }
-
-        .hero-search input {
-            width: 100%;
-            padding: 16px 20px 16px 50px;
-            border: none;
-            border-radius: 12px;
-            font-size: 15px;
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .hero-search input::placeholder {
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        .hero-search input:focus {
-            outline: none;
-            background: rgba(255, 255, 255, 0.2);
-            border-color: rgba(255, 255, 255, 0.4);
-        }
-
-        .hero-search i {
-            position: absolute;
-            left: 18px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 16px;
-        }
-
-        .hero-nav {
-            position: absolute;
-            bottom: 40px;
-            right: 60px;
-            width: 48px;
-            height: 48px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .hero-nav:hover {
-            background: rgba(255, 87, 34, 0.2);
-            transform: scale(1.1);
-        }
-
-        .hero-nav i {
-            color: white;
-            font-size: 18px;
-        }
-
-        /* Main Content */
-        .container {
-            padding: 0 32px 80px;
-        }
-
-        /* Section Header */
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 60px;
-        }
-
-        .section-title {
-            font-size: 48px;
-            font-weight: 300;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .section-count {
-            width: 32px;
-            height: 32px;
-            background: #1a1a1a;
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .section-description {
-            max-width: 500px;
-            font-size: 15px;
-            color: #666;
-            line-height: 1.8;
-        }
-
-        /* API Grid */
-        .api-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 24px;
-        }
-
-        .api-card {
-            background: #e8e8e8;
-            border-radius: 20px;
-            padding: 48px;
-            cursor: pointer;
-            transition: all 0.3s;
-            position: relative;
-        }
-
-        .api-card:hover {
-            background: #dcdcdc;
-            transform: translateY(-4px);
-        }
-
-        .api-card-arrow {
-            position: absolute;
-            bottom: 32px;
-            right: 32px;
-            width: 40px;
-            height: 40px;
-            background: #1a1a1a;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
-        }
-
-        .api-card:hover .api-card-arrow {
-            background: #FF5722;
-        }
-
-        .api-card-arrow i {
-            color: white;
-            font-size: 16px;
-        }
-
-        .api-icon {
-            width: 56px;
-            height: 56px;
-            background: #bbb;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: 700;
-            color: #1a1a1a;
-            margin-bottom: 32px;
-        }
-
-        .api-title {
-            font-size: 18px;
-            font-weight: 500;
-            margin-bottom: 16px;
-            color: #1a1a1a;
-        }
-
-        .api-description {
-            font-size: 14px;
-            color: #666;
-            line-height: 1.7;
-        }
-
-        /* Stats Box */
-        .stats-box {
-            position: fixed;
-            bottom: 40px;
-            left: 32px;
-            background: white;
-            border-radius: 16px;
-            padding: 24px 32px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            z-index: 100;
-        }
-
-        .stats-number {
-            font-size: 32px;
-            font-weight: 300;
-            color: #1a1a1a;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 4px;
-        }
-
-        .stats-dot {
-            width: 8px;
-            height: 8px;
-            background: #FF5722;
-            border-radius: 50%;
-        }
-
-        .stats-label {
-            font-size: 13px;
-            color: #666;
-        }
-
-        .stats-dots {
-            display: flex;
-            gap: 6px;
-            margin-top: 12px;
-        }
-
-        .stats-dots span {
-            width: 6px;
-            height: 6px;
-            background: #ddd;
-            border-radius: 50%;
-            cursor: pointer;
-        }
-
-        .stats-dots span.active {
-            background: #1a1a1a;
-        }
-
-        /* Loading */
-        .loading {
-            text-align: center;
-            padding: 100px 20px;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid #e8e8e8;
-            border-top-color: #FF5722;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 20px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 100px 20px;
-        }
-
-        .empty-title {
-            font-size: 32px;
-            font-weight: 300;
-            color: #1a1a1a;
-            margin-bottom: 16px;
-        }
-
-        .empty-description {
-            font-size: 16px;
-            color: #666;
-        }
-
-        .hidden {
-            display: none !important;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; background: #f5f5f5; color: #1a1a1a; }
+        .top-bar { background: #f5f5f5; padding: 12px 32px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: #666; }
+        .welcome { font-weight: 500; }
+        .top-nav { display: flex; gap: 24px; }
+        .top-nav-item { display: flex; align-items: center; gap: 8px; color: #1a1a1a; text-decoration: none; transition: color 0.2s; }
+        .top-nav-item:hover { color: #FF5722; }
+        .top-nav-item::before { content: ''; width: 6px; height: 6px; background: #1a1a1a; border-radius: 50%; }
+        .top-nav-item.active::before { background: #FF5722; }
+        .top-nav-item.active { font-weight: 500; }
+        .header { padding: 40px 32px; display: flex; align-items: center; justify-content: space-between; }
+        .logo { font-size: 24px; font-weight: 300; letter-spacing: 8px; text-transform: uppercase; }
+        .hero { margin: 0 32px 60px; background: #1a1a1a; border-radius: 24px; padding: 80px 60px; color: white; position: relative; }
+        .hero-tag { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 40px; opacity: 0.7; }
+        .hero-tag::before { content: ''; width: 6px; height: 6px; background: white; border-radius: 50%; }
+        .hero-subtitle { font-size: 14px; opacity: 0.7; margin-bottom: 40px; }
+        .hero-title { font-size: 72px; font-weight: 300; margin-bottom: 24px; line-height: 1.1; }
+        .hero-description { font-size: 16px; line-height: 1.8; max-width: 600px; opacity: 0.9; margin-bottom: 40px; }
+        .hero-search { max-width: 500px; position: relative; }
+        .hero-search input { width: 100%; padding: 16px 20px 16px 50px; border: none; border-radius: 12px; font-size: 15px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); color: white; border: 1px solid rgba(255, 255, 255, 0.2); }
+        .hero-search input::placeholder { color: rgba(255, 255, 255, 0.6); }
+        .hero-search input:focus { outline: none; background: rgba(255, 255, 255, 0.2); border-color: rgba(255, 255, 255, 0.4); }
+        .hero-search i { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: rgba(255, 255, 255, 0.6); font-size: 16px; }
+        .hero-nav { position: absolute; bottom: 40px; right: 60px; width: 48px; height: 48px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; }
+        .hero-nav:hover { background: rgba(255, 87, 34, 0.2); transform: scale(1.1); }
+        .hero-nav i { color: white; font-size: 18px; }
+        .container { padding: 0 32px 80px; }
+        .section-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 60px; }
+        .section-title { font-size: 48px; font-weight: 300; display: flex; align-items: center; gap: 16px; }
+        .section-count { width: 32px; height: 32px; background: #1a1a1a; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; }
+        .section-description { max-width: 500px; font-size: 15px; color: #666; line-height: 1.8; }
+        .api-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+        .api-card { background: #e8e8e8; border-radius: 20px; padding: 48px; cursor: pointer; transition: all 0.3s; position: relative; }
+        .api-card:hover { background: #dcdcdc; transform: translateY(-4px); }
+        .api-card-arrow { position: absolute; bottom: 32px; right: 32px; width: 40px; height: 40px; background: #1a1a1a; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
+        .api-card:hover .api-card-arrow { background: #FF5722; }
+        .api-card-arrow i { color: white; font-size: 16px; }
+        .api-icon { width: 56px; height: 56px; background: #bbb; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; color: #1a1a1a; margin-bottom: 32px; }
+        .api-badge { display: inline-block; padding: 4px 10px; background: #FF5722; color: white; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; margin-bottom: 16px; }
+        .api-title { font-size: 18px; font-weight: 500; margin-bottom: 16px; }
+        .api-description { font-size: 14px; color: #666; line-height: 1.7; }
+        .stats-box { position: fixed; bottom: 40px; left: 32px; background: white; border-radius: 16px; padding: 24px 32px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); z-index: 100; }
+        .stats-number { font-size: 32px; font-weight: 300; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .stats-dot { width: 8px; height: 8px; background: #FF5722; border-radius: 50%; }
+        .stats-label { font-size: 13px; color: #666; }
+        .stats-dots { display: flex; gap: 6px; margin-top: 12px; }
+        .stats-dots span { width: 6px; height: 6px; background: #ddd; border-radius: 50%; cursor: pointer; }
+        .stats-dots span.active { background: #1a1a1a; }
+        .loading { text-align: center; padding: 100px 20px; }
+        .spinner { width: 40px; height: 40px; border: 3px solid #e8e8e8; border-top-color: #FF5722; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 20px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .empty-state { text-align: center; padding: 100px 20px; }
+        .empty-title { font-size: 32px; font-weight: 300; margin-bottom: 16px; }
+        .empty-description { font-size: 16px; color: #666; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
-    <!-- Top Bar -->
     <div class="top-bar">
         <div class="welcome">Welcome</div>
         <nav class="top-nav">
@@ -413,17 +71,14 @@
             <a href="/marketplace.html" class="top-nav-item active">Marketplace</a>
             <a href="/" class="top-nav-item">APIs</a>
             <a href="/" class="top-nav-item">Docs</a>
-            <a href="/" class="top-nav-item">About</a>
         </nav>
         <div style="font-size: 12px; color: #999;">EN</div>
     </div>
 
-    <!-- Header -->
     <header class="header">
         <div class="logo">KEBAPI</div>
     </header>
 
-    <!-- Hero -->
     <section class="hero">
         <div class="hero-tag">Introduction</div>
         <div class="hero-subtitle">We are API & tech</div>
@@ -432,20 +87,16 @@
             We are a platform for developers and creators who build, share and discover public APIs.
             Our approach is simple, our passion is technology and open source.
         </p>
-        
         <div class="hero-search">
             <i class="fas fa-search"></i>
             <input type="text" id="heroSearch" placeholder="Search APIs..." onkeyup="filterAPIs()">
         </div>
-        
         <div class="hero-nav">
             <i class="fas fa-arrow-right"></i>
         </div>
     </section>
 
-    <!-- Main Container -->
     <div class="container">
-        <!-- Section Header -->
         <div class="section-header">
             <h2 class="section-title">
                 APIs
@@ -457,22 +108,18 @@
             </p>
         </div>
 
-        <!-- Loading -->
         <div id="loading" class="loading">
             <div class="spinner"></div>
         </div>
 
-        <!-- API Grid -->
         <div id="apiGrid" class="api-grid hidden"></div>
 
-        <!-- Empty State -->
         <div id="emptyState" class="empty-state hidden">
             <h3 class="empty-title">No APIs yet</h3>
             <p class="empty-description">Be the first to publish an API to the marketplace</p>
         </div>
     </div>
 
-    <!-- Stats Box -->
     <div class="stats-box">
         <div class="stats-number">
             <span class="stats-dot"></span>
@@ -528,12 +175,12 @@
             document.getElementById('emptyState').classList.add('hidden');
 
             grid.innerHTML = filteredAPIs.map(api => {
-                const fullUrl = `${API_URL}/api${api.path}`;
+                const fullUrl = `${API_URL}/api/${api.project_name}${api.path}`;
                 const initials = (api.path.replace('/', '').substring(0, 2) || 'API').toUpperCase();
-                const displayEmail = api.user_email || 'Anonymous';
                 
                 return `
                     <div class="api-card" onclick="window.open('${fullUrl}', '_blank')">
+                        <div class="api-badge">${api.project_name}</div>
                         <div class="api-icon">${initials}</div>
                         <h3 class="api-title">${api.path.replace('/', '').charAt(0).toUpperCase() + api.path.replace('/', '').slice(1)} API</h3>
                         <p class="api-description">${api.description}</p>
@@ -554,6 +201,7 @@
                 filteredAPIs = allAPIs.filter(api => 
                     api.path.toLowerCase().includes(searchTerm) ||
                     api.description.toLowerCase().includes(searchTerm) ||
+                    api.project_name.toLowerCase().includes(searchTerm) ||
                     (api.user_email && api.user_email.toLowerCase().includes(searchTerm))
                 );
             }

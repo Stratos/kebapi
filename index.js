@@ -41,7 +41,8 @@ async function cargarEndpoints() {
       data.forEach(ep => {
         endpoints.set(ep.id, ep);
         
-        const fullPath = '/api' + ep.path;
+        // Nueva estructura: /api/{project_name}/{endpoint_name}
+        const fullPath = `/api/${ep.project_name}${ep.path}`;
         const method = ep.method.toLowerCase();
         
         // Remover ruta existente si ya existe
@@ -485,7 +486,7 @@ app.post('/api/create-endpoint', async (req, res) => {
       });
     }
 
-    const { prompt } = req.body;
+    const { prompt, project_name } = req.body;
     
     if (!prompt || prompt.length < 10) {
       return res.status(400).json({
@@ -538,6 +539,9 @@ app.post('/api/create-endpoint', async (req, res) => {
     const endpointId = crypto.randomUUID();
     const basePath = `/${schema.resourceNamePlural.toLowerCase()}`;
     
+    // Usar project_name del request o generar uno basado en el schema
+    const projectName = project_name || schema.resourceName.toLowerCase();
+    
     const endpointCompleto = {
       id: endpointId,
       path: basePath,
@@ -548,6 +552,7 @@ app.post('/api/create-endpoint', async (req, res) => {
         data: schema.sampleData,
         total: schema.sampleData.length
       },
+      project_name: projectName,
       user_id: user.id,
       user_email: user.email,
       createdAt: new Date().toISOString(),
@@ -575,10 +580,10 @@ app.post('/api/create-endpoint', async (req, res) => {
     
     endpoints.set(endpointId, saved);
     
-    // Registrar rutas CRUD
-    const fullPath = '/api' + basePath;
+    // Registrar rutas CRUD con nueva estructura
+    const fullPath = `/api/${projectName}${basePath}`;
     
-    // GET /api/resources - Listar todos
+    // GET /api/{project}/{resources} - Listar todos
     app.get(fullPath, async (req, res) => {
       const { data, error } = await supabase
         .from('endpoint_items')
@@ -596,7 +601,7 @@ app.post('/api/create-endpoint', async (req, res) => {
       });
     });
     
-    // GET /api/resources/:id - Obtener uno
+    // GET /api/{project}/{resources}/:id - Obtener uno
     app.get(`${fullPath}/:id`, async (req, res) => {
       const { data, error } = await supabase
         .from('endpoint_items')
@@ -741,7 +746,8 @@ app.get('/api/marketplace', async (req, res) => {
         method,
         description,
         createdAt,
-        user_email
+        user_email,
+        project_name
       `)
       .eq('published', true)
       .order('createdAt', { ascending: false });
