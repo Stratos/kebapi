@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Marketplace - Kebapi</title>
+    <title>Kebapi Marketplace</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -13,334 +12,331 @@
             box-sizing: border-box;
         }
 
-        :root {
-            --purple: #5C4EE5;
-            --purple-light: #7B68EE;
-            --bg: #F9FAFB;
-            --bg-white: #FFFFFF;
-            --text: #1F2937;
-            --text-secondary: #6B7280;
-            --border: #E5E7EB;
-        }
-
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #f7f9fb;
+            color: #1a202c;
+            line-height: 1.5;
         }
 
-        /* Navbar */
-        .navbar {
-            background: var(--bg-white);
-            border-bottom: 1px solid var(--border);
-            padding: 16px 0;
+        /* Header */
+        .header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             position: sticky;
             top: 0;
             z-index: 100;
         }
 
-        .navbar-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 32px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
         .logo {
             display: flex;
             align-items: center;
-            gap: 12px;
-            font-size: 20px;
+            gap: 8px;
+            font-size: 18px;
             font-weight: 700;
-            color: var(--text);
-            text-decoration: none;
+            color: #1a202c;
         }
 
         .logo-icon {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, var(--purple), var(--purple-light));
-            border-radius: 8px;
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 18px;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 24px;
-            align-items: center;
-        }
-
-        .nav-link {
-            color: var(--text-secondary);
-            text-decoration: none;
             font-size: 14px;
-            font-weight: 500;
-            transition: color 0.2s;
         }
 
-        .nav-link:hover {
-            color: var(--purple);
-        }
-
-        .btn-dashboard {
-            padding: 8px 16px;
-            background: var(--purple);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            transition: background 0.2s;
-        }
-
-        .btn-dashboard:hover {
-            background: var(--purple-light);
-        }
-
-        /* Hero */
-        .hero {
-            background: linear-gradient(135deg, var(--purple) 0%, var(--purple-light) 100%);
-            color: white;
-            padding: 60px 32px;
-            text-align: center;
-        }
-
-        .hero-title {
-            font-size: 48px;
-            font-weight: 700;
-            margin-bottom: 16px;
-            letter-spacing: -1px;
-        }
-
-        .hero-subtitle {
-            font-size: 20px;
-            opacity: 0.9;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        /* Main Content */
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 40px 32px;
-        }
-
-        /* Search Bar */
-        .search-section {
-            margin-bottom: 40px;
-        }
-
-        .search-bar {
-            display: flex;
-            gap: 12px;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .search-input {
+        .search-box {
             flex: 1;
-            padding: 14px 20px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 15px;
-            background: var(--bg-white);
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: var(--purple);
-            box-shadow: 0 0 0 3px rgba(92, 78, 229, 0.1);
-        }
-
-        .search-icon {
+            max-width: 500px;
+            margin: 0 40px;
             position: relative;
         }
 
-        .search-icon i {
+        .search-box input {
+            width: 100%;
+            padding: 8px 16px 8px 40px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #f7f9fb;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+        }
+
+        .search-box i {
             position: absolute;
-            left: 16px;
+            left: 14px;
             top: 50%;
             transform: translateY(-50%);
-            color: var(--text-secondary);
-        }
-
-        .search-input-with-icon {
-            padding-left: 48px;
-        }
-
-        /* Stats */
-        .stats {
-            display: flex;
-            gap: 24px;
-            justify-content: center;
-            margin-bottom: 48px;
-            padding-bottom: 32px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .stat {
-            text-align: center;
-        }
-
-        .stat-number {
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--purple);
-        }
-
-        .stat-label {
+            color: #a0aec0;
             font-size: 14px;
-            color: var(--text-secondary);
-            margin-top: 4px;
         }
 
-        /* Section Header */
-        .section-header {
+        .header-actions {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .header-btn {
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #4a5568;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .header-btn:hover {
+            border-color: #cbd5e0;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #5a67d8;
+        }
+
+        /* Layout */
+        .container {
+            display: flex;
+            min-height: calc(100vh - 53px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            padding: 20px 0;
+            position: sticky;
+            top: 53px;
+            height: calc(100vh - 53px);
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            margin-bottom: 24px;
+            padding: 0 16px;
+        }
+
+        .sidebar-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .sidebar-item {
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #4a5568;
+            cursor: pointer;
+            margin-bottom: 2px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sidebar-item:hover {
+            background: #f7f9fb;
+        }
+
+        .sidebar-item.active {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Main Content */
+        .main {
+            flex: 1;
+            padding: 24px 32px;
+            max-width: 1400px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #718096;
             margin-bottom: 24px;
         }
 
-        .section-title {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 8px;
+        .breadcrumb a {
+            color: #718096;
+            text-decoration: none;
         }
 
-        .section-description {
-            font-size: 15px;
-            color: var(--text-secondary);
+        .breadcrumb a:hover {
+            color: #667eea;
+        }
+
+        .breadcrumb i {
+            font-size: 10px;
+        }
+
+        .main-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 32px;
+            color: #1a202c;
         }
 
         /* API Grid */
         .api-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
             gap: 20px;
         }
 
         .api-card {
-            background: var(--bg-white);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 24px;
-            transition: all 0.2s;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
             cursor: pointer;
+            transition: all 0.2s;
             position: relative;
-            overflow: hidden;
         }
 
         .api-card:hover {
-            border-color: var(--purple);
-            box-shadow: 0 4px 20px rgba(92, 78, 229, 0.15);
-            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-color: #cbd5e0;
         }
 
-        .api-card-header {
+        .card-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
         }
 
-        .api-category {
+        .card-category {
             display: inline-block;
-            padding: 4px 12px;
-            background: var(--bg);
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-secondary);
-        }
-
-        .method-badge {
             padding: 4px 10px;
+            background: #edf2f7;
+            color: #4a5568;
             border-radius: 4px;
             font-size: 11px;
             font-weight: 600;
-            letter-spacing: 0.5px;
+            text-transform: capitalize;
         }
 
-        .method-get { background: #ECFDF5; color: #059669; }
-        .method-post { background: #EFF6FF; color: #2563EB; }
-        .method-put { background: #FEF3C7; color: #D97706; }
-        .method-delete { background: #FEE2E2; color: #DC2626; }
+        .card-favorite {
+            color: #cbd5e0;
+            cursor: pointer;
+            font-size: 16px;
+        }
 
-        .api-title {
+        .card-favorite:hover {
+            color: #f56565;
+        }
+
+        .card-logo {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
             font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--text);
+            margin-bottom: 12px;
         }
 
-        .api-description {
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .verified-badge {
+            color: #48bb78;
             font-size: 14px;
-            color: var(--text-secondary);
+        }
+
+        .card-description {
+            font-size: 13px;
+            color: #718096;
             line-height: 1.5;
             margin-bottom: 16px;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
+            min-height: 40px;
         }
 
-        .api-meta {
+        .card-footer {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-top: 16px;
-            border-top: 1px solid var(--border);
-        }
-
-        .api-author {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-
-        .author-avatar {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: var(--purple);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .api-url {
-            font-family: 'Monaco', 'Courier New', monospace;
+            padding-top: 12px;
+            border-top: 1px solid #f7f9fb;
             font-size: 12px;
-            color: var(--purple);
+            color: #a0aec0;
         }
 
-        /* Loading & Empty States */
+        .card-author {
+            color: #718096;
+        }
+
+        .card-meta {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .card-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .card-meta i {
+            font-size: 11px;
+        }
+
+        /* Loading */
         .loading {
             text-align: center;
-            padding: 60px 20px;
+            padding: 60px;
+            color: #a0aec0;
         }
 
         .spinner {
-            width: 48px;
-            height: 48px;
-            border: 4px solid var(--border);
-            border-top-color: var(--purple);
+            width: 40px;
+            height: 40px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #667eea;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
             margin: 0 auto 16px;
@@ -350,33 +346,35 @@
             to { transform: rotate(360deg); }
         }
 
+        /* Empty State */
         .empty-state {
             text-align: center;
             padding: 80px 20px;
         }
 
         .empty-icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 20px;
-            background: var(--bg);
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 16px;
+            background: #f7f9fb;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--text-secondary);
-            font-size: 32px;
+            color: #cbd5e0;
+            font-size: 28px;
         }
 
         .empty-title {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 600;
+            color: #4a5568;
             margin-bottom: 8px;
         }
 
         .empty-description {
-            font-size: 15px;
-            color: var(--text-secondary);
+            font-size: 14px;
+            color: #a0aec0;
         }
 
         .hidden {
@@ -385,90 +383,94 @@
     </style>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar">
-        <div class="navbar-content">
-            <a href="/" class="logo">
-                <div class="logo-icon">
-                    <i class="fas fa-layer-group"></i>
-                </div>
-                <span>Kebapi</span>
-            </a>
-            <div class="nav-links">
-                <a href="/" class="nav-link">Home</a>
-                <a href="/marketplace.html" class="nav-link" style="color: var(--purple);">Marketplace</a>
-                <a href="/" class="btn-dashboard">
-                    <i class="fas fa-rocket"></i> Dashboard
-                </a>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">
+                <i class="fas fa-layer-group"></i>
             </div>
+            <span>Kebapi</span>
         </div>
-    </nav>
+        
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search APIs" onkeyup="filterAPIs()">
+        </div>
 
-    <!-- Hero -->
-    <section class="hero">
-        <h1 class="hero-title">API Marketplace</h1>
-        <p class="hero-subtitle">Discover and use public APIs created by the community</p>
-    </section>
+        <div class="header-actions">
+            <a href="/" class="header-btn">Dashboard</a>
+            <a href="/" class="header-btn btn-primary">Sign In</a>
+        </div>
+    </header>
 
-    <!-- Main Content -->
+    <!-- Container -->
     <div class="container">
-        <!-- Search -->
-        <div class="search-section">
-            <div class="search-bar">
-                <div class="search-icon" style="flex: 1; position: relative;">
-                    <i class="fas fa-search"></i>
-                    <input 
-                        type="text" 
-                        id="searchInput"
-                        class="search-input search-input-with-icon" 
-                        placeholder="Search APIs..."
-                        onkeyup="filterAPIs()"
-                    >
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Categories</div>
+                <div class="sidebar-item active" onclick="filterByCategory('all')">
+                    <i class="fas fa-globe"></i>
+                    All APIs
+                </div>
+                <div class="sidebar-item" onclick="filterByCategory('data')">
+                    <i class="fas fa-database"></i>
+                    Data
+                </div>
+                <div class="sidebar-item" onclick="filterByCategory('finance')">
+                    <i class="fas fa-dollar-sign"></i>
+                    Finance
+                </div>
+                <div class="sidebar-item" onclick="filterByCategory('weather')">
+                    <i class="fas fa-cloud"></i>
+                    Weather
+                </div>
+                <div class="sidebar-item" onclick="filterByCategory('sports')">
+                    <i class="fas fa-futbol"></i>
+                    Sports
+                </div>
+                <div class="sidebar-item" onclick="filterByCategory('other')">
+                    <i class="fas fa-folder"></i>
+                    Other
                 </div>
             </div>
-        </div>
+        </aside>
 
-        <!-- Stats -->
-        <div id="stats" class="stats">
-            <div class="stat">
-                <div class="stat-number" id="totalAPIs">0</div>
-                <div class="stat-label">Public APIs</div>
+        <!-- Main Content -->
+        <main class="main">
+            <div class="breadcrumb">
+                <a href="/"><i class="fas fa-home"></i></a>
+                <i class="fas fa-chevron-right"></i>
+                <span>All APIs</span>
             </div>
-            <div class="stat">
-                <div class="stat-number" id="totalCreators">0</div>
-                <div class="stat-label">Creators</div>
+
+            <h1 class="main-title">All APIs</h1>
+
+            <!-- Loading -->
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Loading APIs...</p>
             </div>
-        </div>
 
-        <!-- Section Header -->
-        <div class="section-header">
-            <h2 class="section-title">All APIs</h2>
-            <p class="section-description">Browse through all published APIs</p>
-        </div>
+            <!-- API Grid -->
+            <div id="apiGrid" class="api-grid hidden"></div>
 
-        <!-- Loading -->
-        <div id="loading" class="loading">
-            <div class="spinner"></div>
-            <p style="color: var(--text-secondary);">Loading APIs...</p>
-        </div>
-
-        <!-- API Grid -->
-        <div id="apiGrid" class="api-grid hidden"></div>
-
-        <!-- Empty State -->
-        <div id="emptyState" class="empty-state hidden">
-            <div class="empty-icon">
-                <i class="fas fa-inbox"></i>
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state hidden">
+                <div class="empty-icon">
+                    <i class="fas fa-inbox"></i>
+                </div>
+                <div class="empty-title">No APIs found</div>
+                <div class="empty-description">Be the first to publish an API to the marketplace!</div>
             </div>
-            <div class="empty-title">No APIs found</div>
-            <div class="empty-description">Be the first to publish an API to the marketplace!</div>
-        </div>
+        </main>
     </div>
 
     <script>
         const API_URL = window.location.origin;
         let allAPIs = [];
         let filteredAPIs = [];
+        let currentCategory = 'all';
 
         async function loadAPIs() {
             try {
@@ -479,7 +481,6 @@
                     allAPIs = data.apis;
                     filteredAPIs = allAPIs;
                     renderAPIs();
-                    updateStats();
                     document.getElementById('loading').classList.add('hidden');
                 } else {
                     document.getElementById('loading').classList.add('hidden');
@@ -505,57 +506,82 @@
             document.getElementById('emptyState').classList.add('hidden');
 
             grid.innerHTML = filteredAPIs.map(api => {
-                const methodClass = 'method-' + api.method.toLowerCase();
                 const fullUrl = `${API_URL}/api${api.path}`;
-                const initials = (api.user_email || 'U').charAt(0).toUpperCase();
+                const initials = (api.path.replace('/', '').substring(0, 2) || 'API').toUpperCase();
                 const displayEmail = api.user_email || 'Anonymous';
-
+                const timeAgo = getTimeAgo(api.createdAt);
+                
                 return `
                     <div class="api-card" onclick="window.open('${fullUrl}', '_blank')">
-                        <div class="api-card-header">
-                            <span class="api-category">API</span>
-                            <span class="method-badge ${methodClass}">${api.method}</span>
+                        <div class="card-header">
+                            <span class="card-category">API</span>
+                            <i class="far fa-heart card-favorite" onclick="event.stopPropagation()"></i>
                         </div>
                         
-                        <h3 class="api-title">${api.path.replace('/', '')}</h3>
-                        <p class="api-description">${api.description}</p>
+                        <div class="card-logo">${initials}</div>
                         
-                        <div class="api-meta">
-                            <div class="api-author">
-                                <div class="author-avatar">${initials}</div>
-                                <span>by ${displayEmail}</span>
+                        <h3 class="card-title">
+                            ${api.path.replace('/', '')}
+                            <i class="fas fa-check-circle verified-badge"></i>
+                        </h3>
+                        
+                        <p class="card-description">${api.description}</p>
+                        
+                        <div class="card-footer">
+                            <span class="card-author">By ${displayEmail.split('@')[0]}</span>
+                            <div class="card-meta">
+                                <span><i class="fas fa-star"></i> 9.9</span>
+                                <span><i class="far fa-clock"></i> ${timeAgo}</span>
+                                <span><i class="fas fa-signal"></i> 100%</span>
                             </div>
-                            <span class="api-url">${api.path}</span>
                         </div>
                     </div>
                 `;
             }).join('');
         }
 
-        function updateStats() {
-            document.getElementById('totalAPIs').textContent = allAPIs.length;
+        function getTimeAgo(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             
-            const uniqueCreators = new Set(allAPIs.map(api => api.user_email).filter(Boolean));
-            document.getElementById('totalCreators').textContent = uniqueCreators.size;
+            if (days === 0) return 'Today';
+            if (days === 1) return '1 day ago';
+            if (days < 30) return `${days} days ago`;
+            if (days < 365) return `${Math.floor(days / 30)} months ago`;
+            return `${Math.floor(days / 365)} year ago`;
         }
 
         function filterAPIs() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             
-            if (!searchTerm) {
-                filteredAPIs = allAPIs;
-            } else {
-                filteredAPIs = allAPIs.filter(api => 
+            filteredAPIs = allAPIs.filter(api => {
+                const matchesSearch = !searchTerm || 
                     api.path.toLowerCase().includes(searchTerm) ||
                     api.description.toLowerCase().includes(searchTerm) ||
-                    (api.user_email && api.user_email.toLowerCase().includes(searchTerm))
-                );
-            }
+                    (api.user_email && api.user_email.toLowerCase().includes(searchTerm));
+                
+                return matchesSearch;
+            });
             
             renderAPIs();
         }
 
-        // Load APIs on page load
+        function filterByCategory(category) {
+            currentCategory = category;
+            
+            // Update active state
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // For now, show all (you can implement category logic later)
+            filteredAPIs = allAPIs;
+            renderAPIs();
+        }
+
         loadAPIs();
     </script>
 </body>
