@@ -127,7 +127,14 @@
         .edit-tab.active { color: #FF5722 !important; border-bottom-color: #FF5722 !important; }
         .edit-tab:hover { color: #1a1a1a !important; }
         .edit-tab-panel { display: none; }
-        .edit-tab-panel.active { display: block; }
+        .edit-tab-panel.active { display: block !important; }
+        .btn-primary { padding: 12px 24px; background: #1a1a1a; color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-primary:hover { background: #FF5722; }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-danger { padding: 12px 24px; background: #EF4444; color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-danger:hover { background: #DC2626; }
+        .btn-secondary { padding: 12px 24px; background: #e8e8e8; color: #1a1a1a; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-secondary:hover { background: #dcdcdc; }
     </style>
 </head>
 <body>
@@ -293,7 +300,7 @@
                         <!-- Tab Panels -->
                         <div style="background: white; border-radius: 0 0 12px 12px; padding: 48px; margin-bottom: 24px;">
                             <!-- Details Tab -->
-                            <div id="editTab-details" class="edit-tab-panel">
+                            <div id="editTab-details" class="edit-tab-panel active">
                                 <div class="form-group">
                                     <label class="form-label">Project Name</label>
                                     <input type="text" id="editProjectInput" class="form-input" placeholder="e.g., entertainment">
@@ -541,7 +548,42 @@ Provide usage examples..." style="min-height: 400px; font-family: 'Monaco', mono
         function openCreateItemModal() { editingItemId = null; document.getElementById('itemModalTitle').textContent = 'Add New Item'; buildItemForm(); document.getElementById('itemModal').classList.remove('hidden'); }
         function openEditItemModal(itemId) { editingItemId = itemId; document.getElementById('itemModalTitle').textContent = 'Edit Item'; buildItemForm(itemId); document.getElementById('itemModal').classList.remove('hidden'); }
         function buildItemForm(itemId = null) { const form = document.getElementById('itemForm'); const fields = currentDataEndpoint.schema?.fields || []; let itemData = {}; if (itemId) { const item = currentDataItems.find(i => i.id === itemId); itemData = item?.data || {}; } form.innerHTML = fields.map(field => `<div class="form-group"><label class="form-label">${field.name}${field.required ? ' *' : ''}</label><input type="${field.type === 'number' ? 'number' : 'text'}" name="${field.name}" class="form-input" value="${itemData[field.name] || ''}" ${field.required ? 'required' : ''} placeholder="Enter ${field.name}"></div>`).join(''); }
-        async function saveItem() { const form = document.getElementById('itemForm'); if (!form.checkValidity()) { form.reportValidity(); return; } const formData = new FormData(form); const data = {}; const fields = currentDataEndpoint.schema?.fields || []; for (let [key, value] of formData.entries()) { const field = fields.find(f => f.name === key); if (field && field.type === 'number') { data[key] = parseFloat(value) || value; } else { data[key] = value; } } if (editingItemId) { const { error } = await supabase.from('endpoint_items').update({ data: data }).eq('id', editingItemId); if (error) { alert('Error: ' + error.message); return; } } else { const { error } = await supabase.from('endpoint_items').insert({ endpoint_id: currentDataEndpoint.id, user_id: currentUser.id, data: data }); if (error) { alert('Error: ' + error.message); return; } } closeItemModal(); loadDataItems(); }
+        async function saveItem() { 
+            const form = document.getElementById('itemForm'); 
+            if (!form.checkValidity()) { form.reportValidity(); return; } 
+            const formData = new FormData(form); 
+            const data = {}; 
+            
+            // Usar currentEditAPI si estamos en edición inline, sino currentDataEndpoint
+            const activeEndpoint = currentEditAPI || currentDataEndpoint;
+            const fields = activeEndpoint.schema?.fields || []; 
+            
+            for (let [key, value] of formData.entries()) { 
+                const field = fields.find(f => f.name === key); 
+                if (field && field.type === 'number') { 
+                    data[key] = parseFloat(value) || value; 
+                } else { 
+                    data[key] = value; 
+                } 
+            } 
+            
+            if (editingItemId) { 
+                const { error } = await supabase.from('endpoint_items').update({ data: data }).eq('id', editingItemId); 
+                if (error) { alert('Error: ' + error.message); return; } 
+            } else { 
+                const { error } = await supabase.from('endpoint_items').insert({ endpoint_id: activeEndpoint.id, user_id: currentUser.id, data: data }); 
+                if (error) { alert('Error: ' + error.message); return; } 
+            } 
+            
+            closeItemModal(); 
+            
+            // Recargar datos apropiados
+            if (currentEditAPI) {
+                loadEditDataItems();
+            } else {
+                loadDataItems();
+            }
+        }
         async function deleteDataItem(itemId) { if (!confirm('Delete this item?')) { return; } const { error } = await supabase.from('endpoint_items').delete().eq('id', itemId); if (error) { alert('Error: ' + error.message); return; } loadDataItems(); }
         function closeDataManager() { document.getElementById('dataManagerModal').classList.add('hidden'); currentDataEndpoint = null; currentDataItems = []; }
         function closeDataManagerOnOverlay(event) { if (event.target === event.currentTarget) { closeDataManager(); } }
@@ -600,7 +642,14 @@ Provide usage examples..." style="min-height: 400px; font-family: 'Monaco', mono
         function switchEditTab(tab) {
             document.querySelectorAll('.edit-tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.edit-tab-panel').forEach(p => p.classList.remove('active'));
-            event.target.classList.add('active');
+            
+            // Activar tab clickeada
+            const clickedTab = Array.from(document.querySelectorAll('.edit-tab')).find(t => 
+                t.textContent.toLowerCase().includes(tab)
+            );
+            if (clickedTab) clickedTab.classList.add('active');
+            
+            // Activar panel
             document.getElementById(`editTab-${tab}`).classList.add('active');
             
             if (tab === 'data' && currentEditAPI && currentEditAPI.schema) {
@@ -700,7 +749,7 @@ Provide usage examples..." style="min-height: 400px; font-family: 'Monaco', mono
         function openCreateItemInlineModal() {
             editingItemId = null;
             document.getElementById('itemModalTitle').textContent = 'Add New Item';
-            buildItemForm();
+            buildItemFormEdit();
             document.getElementById('itemModal').classList.remove('hidden');
         }
 
