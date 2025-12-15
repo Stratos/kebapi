@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <title>Kebapi Marketplace</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            bg: '#0f172a',
+            panel: '#020617',
+            card: '#020617',
+            border: '#1e293b',
+            accent: '#3ecf8e'
+          }
+        }
+      }
+    }
+  </script>
+</head>
+
+<body class="bg-bg text-gray-100 min-h-screen">
+
+  <!-- TOP BAR -->
+  <header class="border-b border-border bg-panel px-6 py-4 flex items-center justify-between">
+    <div class="text-xl font-bold text-white">
+      🌯 Kebapi Marketplace
+    </div>
+
+    <input
+      type="text"
+      placeholder="Search APIs..."
+      class="bg-bg border border-border rounded-md px-4 py-2 w-96 text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+    />
+  </header>
+
+  <!-- MAIN LAYOUT -->
+  <div class="flex">
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 border-r border-border bg-panel min-h-screen p-4">
+      <h3 class="text-xs uppercase tracking-wider text-gray-400 mb-4">
+        Categories
+      </h3>
+
+      <ul class="space-y-2 text-sm">
+        <li class="hover:text-accent cursor-pointer">Open Data</li>
+        <li class="hover:text-accent cursor-pointer">Health</li>
+        <li class="hover:text-accent cursor-pointer">Finance</li>
+        <li class="hover:text-accent cursor-pointer">Weather</li>
+        <li class="hover:text-accent cursor-pointer">AI</li>
+        <li class="hover:text-accent cursor-pointer">Other</li>
+      </ul>
+    </aside>
+
+    <!-- CONTENT -->
+    <main class="flex-1 p-8">
+      <h1 class="text-3xl font-semibold mb-6">
+        Public APIs
+      </h1>
+
+      <!-- GRID -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <!-- EMPTY STATE (temporal) -->
+        <div class="border border-border rounded-lg p-6 text-gray-400">
+          No public APIs yet.
+        </div>
+
+      </div>
+    </main>
+
+  </div>
+
+</body>
+</html>
