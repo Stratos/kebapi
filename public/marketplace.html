@@ -3,213 +3,436 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kebapi Marketplace</title>
+    <title>Kebapi Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; background: #f5f5f5; color: #1a1a1a; }
-        .top-bar { background: #f5f5f5; padding: 12px 32px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: #666; }
-        .welcome { font-weight: 500; }
-        .top-nav { display: flex; gap: 24px; }
-        .top-nav-item { display: flex; align-items: center; gap: 8px; color: #1a1a1a; text-decoration: none; transition: color 0.2s; }
-        .top-nav-item:hover { color: #FF5722; }
-        .top-nav-item::before { content: ''; width: 6px; height: 6px; background: #1a1a1a; border-radius: 50%; }
-        .top-nav-item.active::before { background: #FF5722; }
-        .top-nav-item.active { font-weight: 500; }
-        .header { padding: 40px 32px; display: flex; align-items: center; justify-content: space-between; }
-        .logo { font-size: 24px; font-weight: 300; letter-spacing: 8px; text-transform: uppercase; }
-        .hero { margin: 0 32px 60px; background: #1a1a1a; border-radius: 24px; padding: 80px 60px; color: white; position: relative; }
+        .auth-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .auth-card { background: white; padding: 60px; border-radius: 20px; max-width: 440px; width: 90%; text-align: center; }
+        .auth-logo { font-size: 32px; font-weight: 300; letter-spacing: 8px; text-transform: uppercase; margin-bottom: 48px; }
+        .auth-title { font-size: 36px; font-weight: 300; margin-bottom: 16px; }
+        .auth-subtitle { font-size: 15px; color: #666; margin-bottom: 48px; }
+        .btn-google { width: 100%; padding: 16px 24px; background: #1a1a1a; border: none; border-radius: 12px; font-size: 15px; font-weight: 500; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s; }
+        .btn-google:hover { background: #FF5722; transform: translateY(-2px); }
+        .loading-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 20px; }
+        .spinner { width: 40px; height: 40px; border: 3px solid #e8e8e8; border-top-color: #FF5722; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
+        .app-container { display: flex; min-height: 100vh; }
+        .sidebar { width: 280px; background: white; border-right: 1px solid #e8e8e8; position: fixed; height: 100vh; display: flex; flex-direction: column; z-index: 100; }
+        .sidebar-header { padding: 32px 24px; border-bottom: 1px solid #e8e8e8; }
+        .sidebar-logo { font-size: 20px; font-weight: 300; letter-spacing: 6px; text-transform: uppercase; }
+        .sidebar-nav { flex: 1; padding: 24px 16px; overflow-y: auto; }
+        .nav-section { margin-bottom: 32px; }
+        .nav-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #999; letter-spacing: 1px; padding: 0 12px; margin-bottom: 12px; display: block; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; font-size: 14px; color: #666; cursor: pointer; transition: all 0.2s; margin-bottom: 4px; }
+        .nav-item i { width: 20px; text-align: center; font-size: 16px; }
+        .nav-item:hover { background: #f5f5f5; color: #1a1a1a; }
+        .nav-item.active { background: #1a1a1a; color: white; }
+        .nav-item.active i { color: #FF5722; }
+        .sidebar-footer { padding: 24px; border-top: 1px solid #e8e8e8; }
+        .user-info { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; }
+        .user-details { flex: 1; overflow: hidden; }
+        .user-email { font-size: 13px; color: #666; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .btn-logout { width: 100%; padding: 10px; background: #f5f5f5; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+        .btn-logout:hover { background: #FF5722; color: white; }
+        .main-content { flex: 1; margin-left: 280px; }
+        .top-bar { background: #f5f5f5; padding: 12px 32px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: #666; border-bottom: 1px solid #e8e8e8; }
+        .hero { margin: 32px; background: #1a1a1a; border-radius: 24px; padding: 80px 60px; color: white; position: relative; }
         .hero-tag { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 40px; opacity: 0.7; }
         .hero-tag::before { content: ''; width: 6px; height: 6px; background: white; border-radius: 50%; }
         .hero-subtitle { font-size: 14px; opacity: 0.7; margin-bottom: 40px; }
         .hero-title { font-size: 72px; font-weight: 300; margin-bottom: 24px; line-height: 1.1; }
-        .hero-description { font-size: 16px; line-height: 1.8; max-width: 600px; opacity: 0.9; margin-bottom: 40px; }
-        .hero-search { max-width: 500px; position: relative; }
-        .hero-search input { width: 100%; padding: 16px 20px 16px 50px; border: none; border-radius: 12px; font-size: 15px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); color: white; border: 1px solid rgba(255, 255, 255, 0.2); }
-        .hero-search input::placeholder { color: rgba(255, 255, 255, 0.6); }
-        .hero-search input:focus { outline: none; background: rgba(255, 255, 255, 0.2); border-color: rgba(255, 255, 255, 0.4); }
-        .hero-search i { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: rgba(255, 255, 255, 0.6); font-size: 16px; }
-        .hero-nav { position: absolute; bottom: 40px; right: 60px; width: 48px; height: 48px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; }
-        .hero-nav:hover { background: rgba(255, 87, 34, 0.2); transform: scale(1.1); }
-        .hero-nav i { color: white; font-size: 18px; }
+        .hero-description { font-size: 16px; line-height: 1.8; max-width: 600px; opacity: 0.9; }
         .container { padding: 0 32px 80px; }
         .section-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 60px; }
         .section-title { font-size: 48px; font-weight: 300; display: flex; align-items: center; gap: 16px; }
         .section-count { width: 32px; height: 32px; background: #1a1a1a; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; }
         .section-description { max-width: 500px; font-size: 15px; color: #666; line-height: 1.8; }
-        .api-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
-        .api-card { background: #e8e8e8; border-radius: 20px; padding: 48px; cursor: pointer; transition: all 0.3s; position: relative; }
-        .api-card:hover { background: #dcdcdc; transform: translateY(-4px); }
-        .api-card-arrow { position: absolute; bottom: 32px; right: 32px; width: 40px; height: 40px; background: #1a1a1a; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
-        .api-card:hover .api-card-arrow { background: #FF5722; }
-        .api-card-arrow i { color: white; font-size: 16px; }
-        .api-icon { width: 56px; height: 56px; background: #bbb; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; color: #1a1a1a; margin-bottom: 32px; }
-        .api-badge { display: inline-block; padding: 4px 10px; background: #FF5722; color: white; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; margin-bottom: 16px; }
-        .api-title { font-size: 18px; font-weight: 500; margin-bottom: 16px; }
-        .api-description { font-size: 14px; color: #666; line-height: 1.7; }
-        .stats-box { position: fixed; bottom: 40px; left: 32px; background: white; border-radius: 16px; padding: 24px 32px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); z-index: 100; }
+        .generator-form { background: white; border-radius: 20px; padding: 48px; margin-bottom: 60px; }
+        .form-label { font-size: 14px; font-weight: 500; margin-bottom: 12px; display: block; }
+        .form-input, .form-textarea { width: 100%; padding: 16px; border: 1px solid #e8e8e8; border-radius: 12px; font-size: 15px; font-family: inherit; margin-bottom: 24px; }
+        .form-textarea { min-height: 120px; resize: vertical; }
+        .form-input:focus, .form-textarea:focus { outline: none; border-color: #1a1a1a; }
+        .templates { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 32px; }
+        .template-btn { padding: 16px; background: #f5f5f5; border: none; border-radius: 12px; font-size: 13px; cursor: pointer; transition: all 0.2s; text-align: left; display: flex; align-items: center; gap: 10px; }
+        .template-btn:hover { background: #e8e8e8; }
+        .template-btn i { color: #FF5722; }
+        .btn-generate { width: 100%; padding: 16px; background: #1a1a1a; color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 500; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-generate:hover { background: #FF5722; transform: translateY(-2px); }
+        .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        
+        /* Project Groups */
+        .project-group { margin-bottom: 48px; }
+        .project-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e8e8e8; }
+        .project-name { font-size: 24px; font-weight: 500; text-transform: capitalize; }
+        .project-badge { padding: 6px 12px; background: #FF5722; color: white; border-radius: 6px; font-size: 12px; font-weight: 600; }
+        
+        /* Endpoints Grid */
+        .endpoints-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+        .endpoint-card { background: #e8e8e8; border-radius: 20px; padding: 48px; cursor: pointer; transition: all 0.3s; position: relative; }
+        .endpoint-card:hover { background: #dcdcdc; transform: translateY(-4px); }
+        .endpoint-card-arrow { position: absolute; bottom: 32px; right: 32px; width: 40px; height: 40px; background: #1a1a1a; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
+        .endpoint-card:hover .endpoint-card-arrow { background: #FF5722; }
+        .endpoint-card-arrow i { color: white; font-size: 16px; }
+        .endpoint-method { padding: 6px 12px; background: #bbb; border-radius: 8px; font-size: 11px; font-weight: 600; color: #1a1a1a; text-transform: uppercase; display: inline-block; margin-bottom: 24px; }
+        .endpoint-path { font-size: 18px; font-weight: 500; margin-bottom: 12px; font-family: 'Monaco', monospace; }
+        .endpoint-description { font-size: 14px; color: #666; line-height: 1.7; margin-bottom: 32px; }
+        .endpoint-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn-action { padding: 8px 16px; background: #fff; border: 1px solid #e8e8e8; border-radius: 8px; font-size: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+        .btn-action:hover { border-color: #1a1a1a; }
+        .btn-publish { background: #10B981; color: white; border-color: #10B981; }
+        .btn-publish:hover { background: #059669; }
+        .btn-unpublish { background: #EF4444; color: white; border-color: #EF4444; }
+        .btn-unpublish:hover { background: #DC2626; }
+        .btn-manage { background: #FF5722; color: white; border-color: #FF5722; }
+        .btn-manage:hover { background: #F4511E; }
+        .stats-box { position: fixed; bottom: 40px; right: 40px; background: white; border-radius: 16px; padding: 24px 32px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); z-index: 100; }
         .stats-number { font-size: 32px; font-weight: 300; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
         .stats-dot { width: 8px; height: 8px; background: #FF5722; border-radius: 50%; }
         .stats-label { font-size: 13px; color: #666; }
-        .stats-dots { display: flex; gap: 6px; margin-top: 12px; }
-        .stats-dots span { width: 6px; height: 6px; background: #ddd; border-radius: 50%; cursor: pointer; }
-        .stats-dots span.active { background: #1a1a1a; }
-        .loading { text-align: center; padding: 100px 20px; }
-        .spinner { width: 40px; height: 40px; border: 3px solid #e8e8e8; border-top-color: #FF5722; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 20px; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .empty-state { text-align: center; padding: 100px 20px; }
+        .alert { background: #e8e8e8; border-radius: 12px; padding: 20px; margin-bottom: 24px; font-size: 14px; }
+        .alert-success { background: #ECFDF5; color: #065F46; }
+        .alert-error { background: #FEE2E2; color: #991B1B; }
+        .empty-state { text-align: center; padding: 80px 20px; }
         .empty-title { font-size: 32px; font-weight: 300; margin-bottom: 16px; }
         .empty-description { font-size: 16px; color: #666; }
-        .hidden { display: none !important; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal { background: white; border-radius: 20px; width: 90%; max-width: 1200px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; }
+        .modal-header { padding: 32px; border-bottom: 1px solid #e8e8e8; display: flex; justify-content: space-between; align-items: center; }
+        .modal-title { font-size: 24px; font-weight: 300; }
+        .btn-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #666; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: all 0.2s; }
+        .btn-close:hover { background: #e8e8e8; }
+        .modal-body { flex: 1; overflow-y: auto; padding: 0; }
+        .table-toolbar { padding: 24px 32px; border-bottom: 1px solid #e8e8e8; display: flex; justify-content: space-between; align-items: center; }
+        .btn-add { padding: 12px 24px; background: #1a1a1a; color: white; border: none; border-radius: 10px; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .btn-add:hover { background: #FF5722; }
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th { background: #f5f5f5; padding: 16px 32px; text-align: left; font-size: 12px; font-weight: 500; text-transform: uppercase; color: #666; }
+        .data-table td { padding: 20px 32px; border-top: 1px solid #e8e8e8; font-size: 14px; }
+        .data-table tr:hover { background: #fafafa; }
+        .form-group { margin-bottom: 24px; }
+        .modal-footer { padding: 24px 32px; border-top: 1px solid #e8e8e8; display: flex; justify-content: flex-end; gap: 12px; }
+        .btn-cancel { padding: 12px 24px; background: #e8e8e8; border: none; border-radius: 10px; font-size: 14px; cursor: pointer; }
+        .btn-cancel:hover { background: #dcdcdc; }
+        .btn-save { padding: 12px 24px; background: #1a1a1a; color: white; border: none; border-radius: 10px; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+        .btn-save:hover { background: #FF5722; }
+        .btn-delete { padding: 8px 12px; background: #EF4444; color: white; border: none; border-radius: 8px; font-size: 12px; cursor: pointer; }
+        .btn-delete:hover { background: #DC2626; }
+        .btn-edit { padding: 8px 12px; background: #e8e8e8; border: none; border-radius: 8px; font-size: 12px; cursor: pointer; }
+        .btn-edit:hover { background: #dcdcdc; }
     </style>
 </head>
 <body>
-    <div class="top-bar">
-        <div class="welcome">Welcome</div>
-        <nav class="top-nav">
-            <a href="/" class="top-nav-item">Home</a>
-            <a href="/marketplace.html" class="top-nav-item active">Marketplace</a>
-            <a href="/" class="top-nav-item">APIs</a>
-            <a href="/" class="top-nav-item">Docs</a>
-        </nav>
-        <div style="font-size: 12px; color: #999;">EN</div>
-    </div>
-
-    <header class="header">
-        <div class="logo">KEBAPI</div>
-    </header>
-
-    <section class="hero">
-        <div class="hero-tag">Introduction</div>
-        <div class="hero-subtitle">We are API & tech</div>
-        <h1 class="hero-title">We are Kebapi</h1>
-        <p class="hero-description">
-            We are a platform for developers and creators who build, share and discover public APIs.
-            Our approach is simple, our passion is technology and open source.
-        </p>
-        <div class="hero-search">
-            <i class="fas fa-search"></i>
-            <input type="text" id="heroSearch" placeholder="Search APIs..." onkeyup="filterAPIs()">
-        </div>
-        <div class="hero-nav">
-            <i class="fas fa-arrow-right"></i>
-        </div>
-    </section>
-
-    <div class="container">
-        <div class="section-header">
-            <h2 class="section-title">
-                APIs
-                <span class="section-count" id="apiCount">0</span>
-            </h2>
-            <p class="section-description">
-                Browse our collection of public APIs created by developers worldwide.
-                Each API is ready to integrate, documented and actively maintained by the community.
-            </p>
-        </div>
-
-        <div id="loading" class="loading">
-            <div class="spinner"></div>
-        </div>
-
-        <div id="apiGrid" class="api-grid hidden"></div>
-
-        <div id="emptyState" class="empty-state hidden">
-            <h3 class="empty-title">No APIs yet</h3>
-            <p class="empty-description">Be the first to publish an API to the marketplace</p>
+    <div id="authScreen" class="auth-screen">
+        <div class="auth-card">
+            <div class="auth-logo">KEBAPI</div>
+            <h1 class="auth-title">Welcome back</h1>
+            <p class="auth-subtitle">Sign in to continue to your dashboard</p>
+            <button onclick="signInWithGoogle()" class="btn-google">
+                <svg width="20" height="20" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Continue with Google
+            </button>
         </div>
     </div>
 
-    <div class="stats-box">
-        <div class="stats-number">
-            <span class="stats-dot"></span>
-            <span id="statsNumber">0</span>
+    <div id="loadingScreen" class="loading-screen hidden">
+        <div class="spinner"></div>
+        <p style="color: #666;">Loading...</p>
+    </div>
+
+    <div id="mainApp" class="hidden">
+        <div class="app-container">
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">KEBAPI</div>
+                </div>
+                <nav class="sidebar-nav">
+                    <div class="nav-section">
+                        <span class="nav-label">Main</span>
+                        <div class="nav-item active" onclick="showSection('generator')">
+                            <i class="fas fa-wand-magic-sparkles"></i>
+                            <span>Generator</span>
+                        </div>
+                        <div class="nav-item" onclick="showSection('endpoints')">
+                            <i class="fas fa-database"></i>
+                            <span>My APIs</span>
+                        </div>
+                    </div>
+                    <div class="nav-section">
+                        <span class="nav-label">Discover</span>
+                        <a href="/marketplace.html" class="nav-item">
+                            <i class="fas fa-globe"></i>
+                            <span>Marketplace</span>
+                        </a>
+                    </div>
+                </nav>
+                <div class="sidebar-footer">
+                    <div class="user-info">
+                        <img id="userAvatar" class="user-avatar" src="" alt="User">
+                        <div class="user-details">
+                            <div id="userEmail" class="user-email"></div>
+                        </div>
+                    </div>
+                    <button onclick="signOut()" class="btn-logout">
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
+                    </button>
+                </div>
+            </aside>
+
+            <main class="main-content">
+                <div class="top-bar">
+                    <span id="breadcrumb">Dashboard</span>
+                    <span style="font-size: 12px; color: #999;">EN</span>
+                </div>
+
+                <div id="generatorSection">
+                    <section class="hero">
+                        <div class="hero-tag">AI-Powered</div>
+                        <div class="hero-subtitle">Generate REST APIs instantly</div>
+                        <h1 class="hero-title">Create APIs</h1>
+                        <p class="hero-description">Describe your API in natural language and let AI generate fully functional REST endpoints with CRUD operations.</p>
+                    </section>
+
+                    <div class="container">
+                        <div class="generator-form">
+                            <label class="form-label">Project Name</label>
+                            <input id="projectInput" class="form-input" placeholder="e.g., entertainment, ecommerce, social..." value="">
+                            
+                            <label class="form-label">Describe your API</label>
+                            <textarea id="promptInput" class="form-textarea" placeholder="Example: Create an API for restaurants with name, cuisine type, address and rating..."></textarea>
+
+                            <div class="templates">
+                                <button class="template-btn" onclick="setPrompt('entertainment', 'endpoint de restaurantes con nombre, tipo de comida, dirección y calificación')">
+                                    <i class="fas fa-utensils"></i> Restaurants
+                                </button>
+                                <button class="template-btn" onclick="setPrompt('ecommerce', 'API de productos tech con nombre, precio, marca y stock')">
+                                    <i class="fas fa-laptop"></i> Tech Products
+                                </button>
+                                <button class="template-btn" onclick="setPrompt('social', 'endpoint de usuarios con nombre, email, edad y ciudad')">
+                                    <i class="fas fa-users"></i> Users
+                                </button>
+                                <button class="template-btn" onclick="setPrompt('productivity', 'API de tareas con título, descripción, prioridad y estado')">
+                                    <i class="fas fa-list-check"></i> Tasks
+                                </button>
+                            </div>
+
+                            <button class="btn-generate" id="generateBtn" onclick="generarEndpoint()">
+                                <i class="fas fa-wand-magic-sparkles"></i>Generate API
+                            </button>
+
+                            <div id="loading" class="loading hidden" style="text-align: center; padding: 40px;">
+                                <div class="spinner" style="margin: 0 auto 16px;"></div>
+                                <p style="color: #666;">Generating...</p>
+                            </div>
+                            <div id="result" class="hidden"></div>
+                            <div id="error" class="hidden"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="endpointsSection" class="hidden">
+                    <section class="hero">
+                        <div class="hero-tag">Dashboard</div>
+                        <div class="hero-subtitle">Manage your APIs</div>
+                        <h1 class="hero-title">My APIs</h1>
+                        <p class="hero-description">View, manage and publish your generated API endpoints to the public marketplace.</p>
+                    </section>
+
+                    <div class="container">
+                        <div class="section-header">
+                            <h2 class="section-title">APIs<span class="section-count" id="apiCount">0</span></h2>
+                            <p class="section-description">All your generated endpoints grouped by project with full CRUD operations.</p>
+                        </div>
+
+                        <div id="endpointsList"></div>
+                        <div id="noEndpoints" class="empty-state">
+                            <h3 class="empty-title">No APIs yet</h3>
+                            <p class="empty-description">Create your first API using the generator</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-box">
+                    <div class="stats-number">
+                        <span class="stats-dot"></span>
+                        <span id="statsNumber">0</span>
+                    </div>
+                    <div class="stats-label">APIs created</div>
+                </div>
+            </main>
         </div>
-        <div class="stats-label">APIs online</div>
-        <div class="stats-dots">
-            <span class="active"></span>
-            <span></span>
-            <span></span>
-            <span></span>
+    </div>
+
+    <div id="dataManagerModal" class="modal-overlay hidden" onclick="closeDataManagerOnOverlay(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div>
+                    <h3 id="dataManagerTitle" class="modal-title">Manage Data</h3>
+                    <p id="dataManagerSubtitle" style="font-size: 14px; color: #666; margin-top: 4px;"></p>
+                </div>
+                <button onclick="closeDataManager()" class="btn-close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-toolbar">
+                    <div id="dataCount" style="font-size: 14px; color: #666;"></div>
+                    <button onclick="openCreateItemModal()" class="btn-add"><i class="fas fa-plus"></i>Add New</button>
+                </div>
+                <div id="dataTableLoading" class="loading hidden" style="padding: 60px;"><div class="spinner" style="margin: 0 auto 16px;"></div><p style="color: #666;">Loading...</p></div>
+                <div id="dataTableWrapper"><table id="dataManagerTable" class="data-table"><thead id="dataManagerTableHead"></thead><tbody id="dataManagerTableBody"></tbody></table></div>
+                <div id="dataManagerEmpty" class="empty-state hidden"><h3 class="empty-title">No data yet</h3><p class="empty-description">Click "Add New" to create your first item</p></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="itemModal" class="modal-overlay hidden" onclick="closeItemModalOnOverlay(event)">
+        <div class="modal" onclick="event.stopPropagation()" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 id="itemModalTitle" class="modal-title">Add New Item</h3>
+                <button onclick="closeItemModal()" class="btn-close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 32px;">
+                <form id="itemForm"></form>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeItemModal()" class="btn-cancel">Cancel</button>
+                <button onclick="saveItem()" class="btn-save"><i class="fas fa-save"></i>Save</button>
+            </div>
         </div>
     </div>
 
     <script>
         const API_URL = window.location.origin;
-        let allAPIs = [];
-        let filteredAPIs = [];
+        const SUPABASE_URL = 'https://nugcshddtrufgciosrsq.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51Z2NzaGRkdHJ1ZmdjaW9zcnNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2NTUyMTMsImV4cCI6MjA4MTIzMTIxM30.1ECmZ8bG8HasOZ6pH_b3atPg6i9dxTRcPPUXehbiixY';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let currentUser = null;
+        let endpoints = new Map();
+        let currentDataEndpoint = null;
+        let currentDataItems = [];
+        let editingItemId = null;
 
-        async function loadAPIs() {
+        async function init() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) { currentUser = session.user; showApp(); } else { showAuth(); }
+            supabase.auth.onAuthStateChange((event, session) => {
+                if (session) { currentUser = session.user; showApp(); } else { showAuth(); }
+            });
+        }
+
+        function showAuth() { document.getElementById('authScreen').classList.remove('hidden'); document.getElementById('loadingScreen').classList.add('hidden'); document.getElementById('mainApp').classList.add('hidden'); }
+        function showApp() { document.getElementById('authScreen').classList.add('hidden'); document.getElementById('loadingScreen').classList.add('hidden'); document.getElementById('mainApp').classList.remove('hidden'); document.getElementById('userEmail').textContent = currentUser.email; document.getElementById('userAvatar').src = currentUser.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.email)}&background=FF5722&color=fff`; cargarEndpoints(); }
+        async function signInWithGoogle() { const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } }); if (error) { alert('Error: ' + error.message); } }
+        async function signOut() { const { error } = await supabase.auth.signOut(); if (error) { alert('Error: ' + error.message); } }
+        
+        function showSection(section) {
+            document.getElementById('generatorSection').classList.add('hidden');
+            document.getElementById('endpointsSection').classList.add('hidden');
+            document.getElementById(section + 'Section').classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(item => { item.classList.remove('active'); });
+            event.target.classList.add('active');
+            document.getElementById('breadcrumb').textContent = section === 'generator' ? 'Generator' : 'My APIs';
+            if (section === 'endpoints') { cargarEndpoints(); }
+        }
+
+        function setPrompt(project, text) { 
+            document.getElementById('projectInput').value = project; 
+            document.getElementById('promptInput').value = text; 
+        }
+        
+        async function generarEndpoint() {
+            const prompt = document.getElementById('promptInput').value;
+            const project_name = document.getElementById('projectInput').value.trim() || 'default';
+            const loading = document.getElementById('loading'); const result = document.getElementById('result'); const error = document.getElementById('error'); const btn = document.getElementById('generateBtn');
+            if (prompt.length < 10) { error.innerHTML = '<div class="alert alert-error">Prompt must be at least 10 characters</div>'; error.classList.remove('hidden'); result.classList.add('hidden'); return; }
+            loading.classList.remove('hidden'); result.classList.add('hidden'); error.classList.add('hidden'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Generating...';
             try {
-                const response = await fetch(`${API_URL}/api/marketplace`);
+                const { data: { session } } = await supabase.auth.getSession();
+                const response = await fetch(`${API_URL}/api/create-endpoint`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` }, body: JSON.stringify({ prompt, project_name }) });
                 const data = await response.json();
-
-                if (data.success && data.apis && data.apis.length > 0) {
-                    allAPIs = data.apis;
-                    filteredAPIs = allAPIs;
-                    renderAPIs();
-                    document.getElementById('apiCount').textContent = allAPIs.length;
-                    document.getElementById('statsNumber').textContent = allAPIs.length;
-                    document.getElementById('loading').classList.add('hidden');
-                } else {
-                    document.getElementById('loading').classList.add('hidden');
-                    document.getElementById('emptyState').classList.remove('hidden');
-                }
-            } catch (error) {
-                console.error('Error loading APIs:', error);
-                document.getElementById('loading').classList.add('hidden');
-                document.getElementById('emptyState').classList.remove('hidden');
-            }
+                if (!response.ok) { throw new Error(data.error || 'Error generating endpoint'); }
+                loading.classList.add('hidden'); result.classList.remove('hidden');
+                const fullUrl = `${API_URL}/api/${data.endpoint.project_name}${data.endpoint.path}`;
+                result.innerHTML = `<div class="alert alert-success"><strong>✓ API created successfully!</strong><br><br><code style="color: #065F46; font-weight: 500;">${fullUrl}</code></div>`;
+                document.getElementById('promptInput').value = ''; document.getElementById('projectInput').value = ''; await cargarEndpoints();
+            } catch (err) { loading.classList.add('hidden'); error.innerHTML = `<div class="alert alert-error">${err.message}</div>`; error.classList.remove('hidden'); } finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i>Generate API'; }
         }
 
-        function renderAPIs() {
-            const grid = document.getElementById('apiGrid');
-            
-            if (filteredAPIs.length === 0) {
-                grid.classList.add('hidden');
-                document.getElementById('emptyState').classList.remove('hidden');
-                return;
-            }
-
-            grid.classList.remove('hidden');
-            document.getElementById('emptyState').classList.add('hidden');
-
-            grid.innerHTML = filteredAPIs.map(api => {
-                const fullUrl = `${API_URL}/api/${api.project_name}${api.path}`;
-                const initials = (api.path.replace('/', '').substring(0, 2) || 'API').toUpperCase();
-                
-                return `
-                    <div class="api-card" onclick="window.open('${fullUrl}', '_blank')">
-                        <div class="api-badge">${api.project_name}</div>
-                        <div class="api-icon">${initials}</div>
-                        <h3 class="api-title">${api.path.replace('/', '').charAt(0).toUpperCase() + api.path.replace('/', '').slice(1)} API</h3>
-                        <p class="api-description">${api.description}</p>
-                        <div class="api-card-arrow">
-                            <i class="fas fa-arrow-right"></i>
+        async function cargarEndpoints() {
+            try {
+                const { data, error } = await supabase.from('endpoints').select('*').order('project_name', { ascending: true }).order('createdAt', { ascending: false });
+                const list = document.getElementById('endpointsList'); const noEndpoints = document.getElementById('noEndpoints'); const apiCount = document.getElementById('apiCount'); const statsNumber = document.getElementById('statsNumber');
+                if (error) throw error;
+                if (data && data.length > 0) {
+                    noEndpoints.classList.add('hidden'); apiCount.textContent = data.length; statsNumber.textContent = data.length;
+                    endpoints.clear(); data.forEach(ep => endpoints.set(ep.id, ep));
+                    
+                    // Agrupar por proyecto
+                    const grouped = data.reduce((acc, ep) => {
+                        const project = ep.project_name || 'default';
+                        if (!acc[project]) acc[project] = [];
+                        acc[project].push(ep);
+                        return acc;
+                    }, {});
+                    
+                    list.innerHTML = Object.entries(grouped).map(([project, eps]) => `
+                        <div class="project-group">
+                            <div class="project-header">
+                                <h3 class="project-name">${project}</h3>
+                                <span class="project-badge">${eps.length} ${eps.length === 1 ? 'API' : 'APIs'}</span>
+                            </div>
+                            <div class="endpoints-grid">
+                                ${eps.map(ep => {
+                                    const fullUrl = `${API_URL}/api/${ep.project_name}${ep.path}`;
+                                    const publishBtn = ep.published ? `<button class="btn-action btn-unpublish" onclick="togglePublish('${ep.id}', false)"><i class="fas fa-eye-slash"></i> Unpublish</button>` : `<button class="btn-action btn-publish" onclick="togglePublish('${ep.id}', true)"><i class="fas fa-globe"></i> Publish</button>`;
+                                    return `
+                                        <div class="endpoint-card" onclick="window.open('${fullUrl}', '_blank')">
+                                            <div class="endpoint-method">${ep.method}</div>
+                                            <div class="endpoint-path">${ep.path}</div>
+                                            <div class="endpoint-description">${ep.description}</div>
+                                            <div class="endpoint-actions" onclick="event.stopPropagation()">
+                                                <button class="btn-action" onclick="window.open('/api-detail.html?project=${ep.project_name}&endpoint=${ep.path.replace('/', '')}', '_blank')" style="background: #667eea; color: white; border-color: #667eea;">
+                                                    <i class="fas fa-book"></i> Docs
+                                                </button>
+                                                ${ep.schema ? `<button class="btn-action btn-manage" onclick="openDataManager('${ep.id}')"><i class="fas fa-database"></i> Manage</button>` : ''}
+                                                ${publishBtn}
+                                            </div>
+                                            <div class="endpoint-card-arrow">
+                                                <i class="fas fa-arrow-right"></i>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
                         </div>
-                    </div>
-                `;
-            }).join('');
+                    `).join('');
+                } else { noEndpoints.classList.remove('hidden'); apiCount.textContent = '0'; statsNumber.textContent = '0'; list.innerHTML = ''; }
+            } catch (err) { console.error('Error loading endpoints:', err); }
         }
 
-        function filterAPIs() {
-            const searchTerm = document.getElementById('heroSearch').value.toLowerCase();
-            
-            if (!searchTerm) {
-                filteredAPIs = allAPIs;
-            } else {
-                filteredAPIs = allAPIs.filter(api => 
-                    api.path.toLowerCase().includes(searchTerm) ||
-                    api.description.toLowerCase().includes(searchTerm) ||
-                    api.project_name.toLowerCase().includes(searchTerm) ||
-                    (api.user_email && api.user_email.toLowerCase().includes(searchTerm))
-                );
-            }
-            
-            renderAPIs();
-        }
+        async function togglePublish(endpointId, publish) { if (!confirm(publish ? 'Publish to marketplace?' : 'Unpublish from marketplace?')) { return; } try { const { error } = await supabase.from('endpoints').update({ published: publish }).eq('id', endpointId); if (error) { alert('Error: ' + error.message); return; } await cargarEndpoints(); } catch (err) { alert('Error: ' + err.message); } }
+        async function openDataManager(endpointId) { const endpoint = endpoints.get(endpointId); if (!endpoint || !endpoint.schema) return; currentDataEndpoint = endpoint; document.getElementById('dataManagerTitle').textContent = 'Manage Data'; document.getElementById('dataManagerSubtitle').textContent = endpoint.description; document.getElementById('dataManagerModal').classList.remove('hidden'); loadDataItems(); }
+        async function loadDataItems() { const loading = document.getElementById('dataTableLoading'); const wrapper = document.getElementById('dataTableWrapper'); const empty = document.getElementById('dataManagerEmpty'); loading.classList.remove('hidden'); wrapper.classList.add('hidden'); empty.classList.add('hidden'); const { data, error } = await supabase.from('endpoint_items').select('*').eq('endpoint_id', currentDataEndpoint.id).order('created_at', { ascending: false }); loading.classList.add('hidden'); if (error) { alert('Error: ' + error.message); return; } currentDataItems = data || []; if (currentDataItems.length === 0) { empty.classList.remove('hidden'); document.getElementById('dataCount').textContent = 'No items'; } else { wrapper.classList.remove('hidden'); document.getElementById('dataCount').textContent = `${currentDataItems.length} item${currentDataItems.length !== 1 ? 's' : ''}`; renderDataTable(); } }
+        function renderDataTable() { const thead = document.getElementById('dataManagerTableHead'); const tbody = document.getElementById('dataManagerTableBody'); const fields = currentDataEndpoint.schema?.fields || []; const sampleItem = currentDataItems[0]?.data || {}; const fieldNames = fields.length > 0 ? fields.map(f => f.name) : Object.keys(sampleItem); thead.innerHTML = `<tr>${fieldNames.map(field => `<th>${field}</th>`).join('')}<th style="width: 140px;">Actions</th></tr>`; tbody.innerHTML = currentDataItems.map(item => `<tr>${fieldNames.map(field => { const value = item.data[field]; const displayValue = typeof value === 'object' ? JSON.stringify(value) : (value !== undefined && value !== null ? value : '-'); const truncated = String(displayValue).length > 50 ? String(displayValue).substring(0, 50) + '...' : displayValue; return `<td title="${String(displayValue)}">${truncated}</td>`; }).join('')}<td><div style="display: flex; gap: 8px;"><button onclick="openEditItemModal('${item.id}')" class="btn-edit"><i class="fas fa-edit"></i></button><button onclick="deleteDataItem('${item.id}')" class="btn-delete"><i class="fas fa-trash"></i></button></div></td></tr>`).join(''); }
+        function openCreateItemModal() { editingItemId = null; document.getElementById('itemModalTitle').textContent = 'Add New Item'; buildItemForm(); document.getElementById('itemModal').classList.remove('hidden'); }
+        function openEditItemModal(itemId) { editingItemId = itemId; document.getElementById('itemModalTitle').textContent = 'Edit Item'; buildItemForm(itemId); document.getElementById('itemModal').classList.remove('hidden'); }
+        function buildItemForm(itemId = null) { const form = document.getElementById('itemForm'); const fields = currentDataEndpoint.schema?.fields || []; let itemData = {}; if (itemId) { const item = currentDataItems.find(i => i.id === itemId); itemData = item?.data || {}; } form.innerHTML = fields.map(field => `<div class="form-group"><label class="form-label">${field.name}${field.required ? ' *' : ''}</label><input type="${field.type === 'number' ? 'number' : 'text'}" name="${field.name}" class="form-input" value="${itemData[field.name] || ''}" ${field.required ? 'required' : ''} placeholder="Enter ${field.name}"></div>`).join(''); }
+        async function saveItem() { const form = document.getElementById('itemForm'); if (!form.checkValidity()) { form.reportValidity(); return; } const formData = new FormData(form); const data = {}; const fields = currentDataEndpoint.schema?.fields || []; for (let [key, value] of formData.entries()) { const field = fields.find(f => f.name === key); if (field && field.type === 'number') { data[key] = parseFloat(value) || value; } else { data[key] = value; } } if (editingItemId) { const { error } = await supabase.from('endpoint_items').update({ data: data }).eq('id', editingItemId); if (error) { alert('Error: ' + error.message); return; } } else { const { error } = await supabase.from('endpoint_items').insert({ endpoint_id: currentDataEndpoint.id, user_id: currentUser.id, data: data }); if (error) { alert('Error: ' + error.message); return; } } closeItemModal(); loadDataItems(); }
+        async function deleteDataItem(itemId) { if (!confirm('Delete this item?')) { return; } const { error } = await supabase.from('endpoint_items').delete().eq('id', itemId); if (error) { alert('Error: ' + error.message); return; } loadDataItems(); }
+        function closeDataManager() { document.getElementById('dataManagerModal').classList.add('hidden'); currentDataEndpoint = null; currentDataItems = []; }
+        function closeDataManagerOnOverlay(event) { if (event.target === event.currentTarget) { closeDataManager(); } }
+        function closeItemModal() { document.getElementById('itemModal').classList.add('hidden'); editingItemId = null; }
+        function closeItemModalOnOverlay(event) { if (event.target === event.currentTarget) { closeItemModal(); } }
 
-        loadAPIs();
+        init();
     </script>
 </body>
 </html>

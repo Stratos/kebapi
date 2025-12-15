@@ -399,6 +399,9 @@
                                             <div class="endpoint-path">${ep.path}</div>
                                             <div class="endpoint-description">${ep.description}</div>
                                             <div class="endpoint-actions" onclick="event.stopPropagation()">
+                                                <button class="btn-action" onclick="window.open('/api-detail.html?project=${ep.project_name}&endpoint=${ep.path.replace('/', '')}', '_blank')" style="background: #667eea; color: white; border-color: #667eea;">
+                                                    <i class="fas fa-book"></i> Docs
+                                                </button>
                                                 ${ep.schema ? `<button class="btn-action btn-manage" onclick="openDataManager('${ep.id}')"><i class="fas fa-database"></i> Manage</button>` : ''}
                                                 ${publishBtn}
                                             </div>

@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation - Kebapi</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; background: #f5f5f5; color: #1a1a1a; line-height: 1.6; }
+        
+        /* Top Bar */
+        .top-bar { background: #f5f5f5; padding: 12px 32px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: #666; border-bottom: 1px solid #e8e8e8; }
+        .breadcrumb { display: flex; align-items: center; gap: 8px; }
+        .breadcrumb a { color: #666; text-decoration: none; }
+        .breadcrumb a:hover { color: #FF5722; }
+        
+        /* Header */
+        .header { padding: 40px 32px; display: flex; align-items: center; justify-content: space-between; }
+        .logo { font-size: 24px; font-weight: 300; letter-spacing: 8px; text-transform: uppercase; }
+        
+        /* Hero */
+        .hero { margin: 0 32px 60px; background: #1a1a1a; border-radius: 24px; padding: 60px; color: white; }
+        .api-badge { display: inline-block; padding: 6px 12px; background: #FF5722; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; margin-bottom: 16px; }
+        .api-name { font-size: 48px; font-weight: 300; margin-bottom: 16px; }
+        .api-description { font-size: 18px; opacity: 0.8; margin-bottom: 32px; max-width: 800px; }
+        .api-url-box { background: rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; display: flex; align-items: center; justify-content: space-between; }
+        .api-url { font-family: 'Monaco', monospace; font-size: 16px; color: #FF5722; }
+        .btn-copy { padding: 10px 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 8px; color: white; cursor: pointer; transition: all 0.2s; }
+        .btn-copy:hover { background: #FF5722; }
+        
+        /* Container */
+        .container { max-width: 1400px; margin: 0 auto; padding: 0 32px 80px; display: grid; grid-template-columns: 1fr 400px; gap: 32px; }
+        
+        /* Main Content */
+        .main-content { }
+        
+        /* Section */
+        .section { background: white; border-radius: 20px; padding: 40px; margin-bottom: 24px; }
+        .section-title { font-size: 24px; font-weight: 500; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
+        .section-title i { color: #FF5722; }
+        
+        /* Schema Table */
+        .schema-table { width: 100%; border-collapse: collapse; }
+        .schema-table th { background: #f5f5f5; padding: 12px; text-align: left; font-size: 12px; font-weight: 600; text-transform: uppercase; color: #666; }
+        .schema-table td { padding: 16px 12px; border-top: 1px solid #e8e8e8; font-size: 14px; }
+        .field-name { font-family: 'Monaco', monospace; font-weight: 600; color: #FF5722; }
+        .field-type { padding: 4px 8px; background: #f5f5f5; border-radius: 4px; font-size: 12px; font-family: 'Monaco', monospace; }
+        .field-required { color: #10B981; font-size: 12px; }
+        
+        /* Code Block */
+        .code-block { background: #1a1a1a; border-radius: 12px; padding: 20px; margin-top: 16px; overflow-x: auto; }
+        .code-block pre { margin: 0; }
+        .code-block code { color: #e8e8e8; font-family: 'Monaco', monospace; font-size: 14px; }
+        
+        /* Tabs */
+        .tabs { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid #e8e8e8; }
+        .tab { padding: 12px 20px; background: none; border: none; font-size: 14px; font-weight: 500; color: #666; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .tab:hover { color: #1a1a1a; }
+        .tab.active { color: #FF5722; border-bottom-color: #FF5722; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* Sidebar */
+        .sidebar { position: sticky; top: 32px; height: fit-content; }
+        
+        /* Playground */
+        .playground { background: white; border-radius: 20px; padding: 32px; }
+        .playground-title { font-size: 20px; font-weight: 500; margin-bottom: 24px; }
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px; }
+        .form-select, .form-input, .form-textarea { width: 100%; padding: 12px; border: 1px solid #e8e8e8; border-radius: 8px; font-size: 14px; font-family: inherit; }
+        .form-textarea { min-height: 120px; font-family: 'Monaco', monospace; }
+        .form-select:focus, .form-input:focus, .form-textarea:focus { outline: none; border-color: #FF5722; }
+        .btn-try { width: 100%; padding: 14px; background: #FF5722; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-try:hover { background: #F4511E; }
+        .btn-try:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        /* Response */
+        .response { margin-top: 24px; }
+        .response-header { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f5f5f5; border-radius: 8px 8px 0 0; }
+        .response-status { font-size: 14px; font-weight: 600; }
+        .response-status.success { color: #10B981; }
+        .response-status.error { color: #EF4444; }
+        .response-body { background: #1a1a1a; padding: 20px; border-radius: 0 0 8px 8px; overflow-x: auto; }
+        .response-body pre { margin: 0; color: #e8e8e8; font-family: 'Monaco', monospace; font-size: 13px; }
+        
+        /* Loading */
+        .spinner { width: 24px; height: 24px; border: 3px solid #e8e8e8; border-top-color: #FF5722; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .hidden { display: none !important; }
+        
+        /* CRUD Methods */
+        .crud-methods { display: flex; flex-direction: column; gap: 16px; }
+        .crud-item { background: #f5f5f5; border-radius: 12px; padding: 20px; }
+        .crud-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .method-badge { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+        .method-get { background: #ECFDF5; color: #059669; }
+        .method-post { background: #EFF6FF; color: #2563EB; }
+        .method-put { background: #FEF3C7; color: #D97706; }
+        .method-delete { background: #FEE2E2; color: #DC2626; }
+        .crud-path { font-family: 'Monaco', monospace; font-size: 14px; font-weight: 500; }
+        .crud-description { font-size: 14px; color: #666; }
+    </style>
+</head>
+<body>
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="breadcrumb">
+            <a href="/marketplace.html">Marketplace</a>
+            <i class="fas fa-chevron-right" style="font-size: 10px;"></i>
+            <span id="breadcrumbApi">API Documentation</span>
+        </div>
+        <span style="font-size: 12px; color: #999;">EN</span>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <a href="/marketplace.html" class="logo" style="text-decoration: none; color: inherit;">KEBAPI</a>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="api-badge" id="projectBadge">Loading...</div>
+        <h1 class="api-name" id="apiName">Loading...</h1>
+        <p class="api-description" id="apiDescription">Loading documentation...</p>
+        <div class="api-url-box">
+            <code class="api-url" id="apiUrl">https://...</code>
+            <button class="btn-copy" onclick="copyUrl()">
+                <i class="fas fa-copy"></i> Copy
+            </button>
+        </div>
+    </section>
+
+    <!-- Container -->
+    <div class="container">
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Schema -->
+            <div class="section" id="schemaSection">
+                <h2 class="section-title">
+                    <i class="fas fa-table"></i>
+                    Schema
+                </h2>
+                <table class="schema-table" id="schemaTable"></table>
+            </div>
+
+            <!-- CRUD Operations -->
+            <div class="section" id="crudSection">
+                <h2 class="section-title">
+                    <i class="fas fa-code"></i>
+                    CRUD Operations
+                </h2>
+                <div class="crud-methods" id="crudMethods"></div>
+            </div>
+
+            <!-- Code Examples -->
+            <div class="section">
+                <h2 class="section-title">
+                    <i class="fas fa-terminal"></i>
+                    Code Examples
+                </h2>
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('curl')">cURL</button>
+                    <button class="tab" onclick="switchTab('javascript')">JavaScript</button>
+                    <button class="tab" onclick="switchTab('python')">Python</button>
+                </div>
+                <div id="tab-curl" class="tab-content active">
+                    <div class="code-block">
+                        <pre><code id="code-curl"></code></pre>
+                    </div>
+                </div>
+                <div id="tab-javascript" class="tab-content">
+                    <div class="code-block">
+                        <pre><code id="code-javascript"></code></pre>
+                    </div>
+                </div>
+                <div id="tab-python" class="tab-content">
+                    <div class="code-block">
+                        <pre><code id="code-python"></code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sample Data -->
+            <div class="section" id="sampleSection">
+                <h2 class="section-title">
+                    <i class="fas fa-database"></i>
+                    Sample Response
+                </h2>
+                <div class="code-block">
+                    <pre><code id="sampleData"></code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar - Playground -->
+        <div class="sidebar">
+            <div class="playground">
+                <h3 class="playground-title">🧪 Try it out</h3>
+                
+                <div class="form-group">
+                    <label class="form-label">Method</label>
+                    <select id="methodSelect" class="form-select" onchange="updatePlayground()">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="DELETE">DELETE</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Endpoint</label>
+                    <input type="text" id="endpointInput" class="form-input" readonly>
+                </div>
+
+                <div class="form-group" id="bodyGroup" style="display: none;">
+                    <label class="form-label">Request Body (JSON)</label>
+                    <textarea id="bodyInput" class="form-textarea" placeholder='{"key": "value"}'></textarea>
+                </div>
+
+                <button class="btn-try" onclick="tryRequest()" id="tryBtn">
+                    <i class="fas fa-play"></i> Send Request
+                </button>
+
+                <div id="responseSection" class="response hidden">
+                    <div class="response-header">
+                        <span class="response-status" id="responseStatus"></span>
+                        <span style="font-size: 12px; color: #666;" id="responseTime"></span>
+                    </div>
+                    <div class="response-body">
+                        <pre id="responseBody"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let apiData = null;
+        const urlParams = new URLSearchParams(window.location.search);
+        const project = urlParams.get('project');
+        const endpoint = urlParams.get('endpoint');
+
+        async function loadApiDocs() {
+            if (!project || !endpoint) {
+                alert('Invalid URL parameters');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${window.location.origin}/api/docs/${project}/${endpoint}`);
+                const data = await response.json();
+
+                if (!data.success) {
+                    alert('API not found');
+                    return;
+                }
+
+                apiData = data;
+                renderDocs();
+            } catch (error) {
+                console.error('Error loading docs:', error);
+                alert('Error loading documentation');
+            }
+        }
+
+        function renderDocs() {
+            // Hero
+            document.getElementById('projectBadge').textContent = apiData.api.project;
+            document.getElementById('apiName').textContent = apiData.api.name;
+            document.getElementById('apiDescription').textContent = apiData.api.description;
+            document.getElementById('apiUrl').textContent = apiData.api.fullUrl;
+            document.getElementById('breadcrumbApi').textContent = apiData.api.name;
+
+            // Schema
+            if (apiData.schema && apiData.schema.fields) {
+                const schemaTable = document.getElementById('schemaTable');
+                schemaTable.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th>Type</th>
+                            <th>Required</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${apiData.schema.fields.map(field => `
+                            <tr>
+                                <td class="field-name">${field.name}</td>
+                                <td><span class="field-type">${field.type}</span></td>
+                                <td class="field-required">${field.required ? '✓ Yes' : '○ No'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                `;
+            } else {
+                document.getElementById('schemaSection').style.display = 'none';
+            }
+
+            // CRUD
+            if (apiData.crud) {
+                const crudMethods = document.getElementById('crudMethods');
+                crudMethods.innerHTML = Object.entries(apiData.crud).map(([key, op]) => `
+                    <div class="crud-item">
+                        <div class="crud-header">
+                            <span class="method-badge method-${op.method.toLowerCase()}">${op.method}</span>
+                            <code class="crud-path">${op.url.replace(window.location.origin, '')}</code>
+                        </div>
+                        <p class="crud-description">${op.description}</p>
+                    </div>
+                `).join('');
+            } else {
+                document.getElementById('crudSection').style.display = 'none';
+            }
+
+            // Code Examples
+            document.getElementById('code-curl').textContent = apiData.examples.curl;
+            document.getElementById('code-javascript').textContent = apiData.examples.javascript;
+            document.getElementById('code-python').textContent = apiData.examples.python;
+            hljs.highlightAll();
+
+            // Sample Data
+            if (apiData.sampleData && apiData.sampleData.length > 0) {
+                document.getElementById('sampleData').textContent = JSON.stringify({ 
+                    success: true, 
+                    data: apiData.sampleData,
+                    total: apiData.sampleData.length 
+                }, null, 2);
+            } else {
+                document.getElementById('sampleSection').style.display = 'none';
+            }
+
+            // Playground
+            document.getElementById('endpointInput').value = apiData.api.fullUrl;
+            updatePlayground();
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(`tab-${tab}`).classList.add('active');
+        }
+
+        function updatePlayground() {
+            const method = document.getElementById('methodSelect').value;
+            const bodyGroup = document.getElementById('bodyGroup');
+            
+            if (method === 'POST' || method === 'PUT') {
+                bodyGroup.style.display = 'block';
+                if (apiData && apiData.crud && apiData.crud.create) {
+                    document.getElementById('bodyInput').value = JSON.stringify(apiData.crud.create.body, null, 2);
+                }
+            } else {
+                bodyGroup.style.display = 'none';
+            }
+        }
+
+        async function tryRequest() {
+            const method = document.getElementById('methodSelect').value;
+            const url = document.getElementById('endpointInput').value;
+            const body = document.getElementById('bodyInput').value;
+            const responseSection = document.getElementById('responseSection');
+            const tryBtn = document.getElementById('tryBtn');
+
+            tryBtn.disabled = true;
+            tryBtn.innerHTML = '<div class="spinner"></div>';
+
+            const startTime = Date.now();
+
+            try {
+                const options = {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' }
+                };
+
+                if ((method === 'POST' || method === 'PUT') && body) {
+                    options.body = body;
+                }
+
+                const response = await fetch(url, options);
+                const data = await response.json();
+                const endTime = Date.now();
+
+                responseSection.classList.remove('hidden');
+                document.getElementById('responseStatus').textContent = `${response.status} ${response.statusText}`;
+                document.getElementById('responseStatus').className = `response-status ${response.ok ? 'success' : 'error'}`;
+                document.getElementById('responseTime').textContent = `${endTime - startTime}ms`;
+                document.getElementById('responseBody').textContent = JSON.stringify(data, null, 2);
+
+            } catch (error) {
+                responseSection.classList.remove('hidden');
+                document.getElementById('responseStatus').textContent = 'Error';
+                document.getElementById('responseStatus').className = 'response-status error';
+                document.getElementById('responseBody').textContent = error.message;
+            } finally {
+                tryBtn.disabled = false;
+                tryBtn.innerHTML = '<i class="fas fa-play"></i> Send Request';
+            }
+        }
+
+        function copyUrl() {
+            const url = document.getElementById('apiUrl').textContent;
+            navigator.clipboard.writeText(url).then(() => {
+                const btn = event.target.closest('.btn-copy');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                }, 2000);
+            });
+        }
+
+        loadApiDocs();
+    </script>
+</body>
+</html>

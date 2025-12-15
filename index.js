@@ -802,3 +802,116 @@ async function iniciar() {
 }
 
 iniciar();
+// ═══════════════════════════════════════════════════════════
+// 📄 API DOCUMENTATION ENDPOINT
+// ═══════════════════════════════════════════════════════════
+app.get('/api/docs/:project/:endpoint', async (req, res) => {
+  try {
+    const { project, endpoint } = req.params;
+    const path = `/${endpoint}`;
+    
+    // Buscar el endpoint en la base de datos
+    const { data, error } = await supabase
+      .from('endpoints')
+      .select('*')
+      .eq('project_name', project)
+      .eq('path', path)
+      .single();
+    
+    if (error || !data) {
+      return res.status(404).json({
+        success: false,
+        error: 'API not found'
+      });
+    }
+    
+    // Obtener datos de ejemplo
+    let sampleData = [];
+    if (data.schema) {
+      const { data: items } = await supabase
+        .from('endpoint_items')
+        .select('data')
+        .eq('endpoint_id', data.id)
+        .limit(3);
+      
+      if (items) {
+        sampleData = items.map(item => item.data);
+      }
+    }
+    
+    // Construir documentación
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const fullPath = `/api/${project}${path}`;
+    
+    const documentation = {
+      success: true,
+      api: {
+        name: `${endpoint.charAt(0).toUpperCase() + endpoint.slice(1)} API`,
+        project: project,
+        endpoint: endpoint,
+        path: fullPath,
+        fullUrl: `${baseUrl}${fullPath}`,
+        method: data.method,
+        description: data.description,
+        createdAt: data.createdAt,
+        author: data.user_email
+      },
+      schema: data.schema || null,
+      sampleData: sampleData,
+      examples: {
+        curl: `curl -X ${data.method} "${baseUrl}${fullPath}"`,
+        javascript: `fetch("${baseUrl}${fullPath}")
+  .then(res => res.json())
+  .then(data => console.log(data));`,
+        python: `import requests
+
+response = requests.${data.method.toLowerCase()}("${baseUrl}${fullPath}")
+data = response.json()
+print(data)`
+      },
+      crud: data.schema ? {
+        list: {
+          method: 'GET',
+          url: `${baseUrl}${fullPath}`,
+          description: 'Get all items'
+        },
+        get: {
+          method: 'GET',
+          url: `${baseUrl}${fullPath}/:id`,
+          description: 'Get one item by ID'
+        },
+        create: {
+          method: 'POST',
+          url: `${baseUrl}${fullPath}`,
+          description: 'Create a new item',
+          body: data.schema.fields.reduce((acc, field) => {
+            acc[field.name] = field.type === 'number' ? 0 : 'string';
+            return acc;
+          }, {})
+        },
+        update: {
+          method: 'PUT',
+          url: `${baseUrl}${fullPath}/:id`,
+          description: 'Update an existing item',
+          body: data.schema.fields.reduce((acc, field) => {
+            acc[field.name] = field.type === 'number' ? 0 : 'string';
+            return acc;
+          }, {})
+        },
+        delete: {
+          method: 'DELETE',
+          url: `${baseUrl}${fullPath}/:id`,
+          description: 'Delete an item'
+        }
+      } : null
+    };
+    
+    res.json(documentation);
+    
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+});
