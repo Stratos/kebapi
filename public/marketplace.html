@@ -177,17 +177,17 @@
             grid.innerHTML = filteredAPIs.map(api => {
                 const fullUrl = `${API_URL}/api/${api.project_name}${api.path}`;
                 const initials = (api.path.replace('/', '').substring(0, 2) || 'API').toUpperCase();
+                const displayAuthor = api.user_email ? api.user_email.split('@')[0] : 'Anonymous';
                 
                 return `
-                    <div class="api-card" onclick="window.open('${fullUrl}', '_blank')">
+                    <div class="api-card" onclick="window.open('/api-docs.html?project=${api.project_name}&endpoint=${api.path.replace('/', '')}', '_blank')">
                         <div class="api-badge">${api.project_name}</div>
                         <div class="api-icon">${initials}</div>
                         <h3 class="api-title">${api.path.replace('/', '').charAt(0).toUpperCase() + api.path.replace('/', '').slice(1)} API</h3>
                         <p class="api-description">${api.description}</p>
-                        <div style="margin-top: 16px; display: flex; gap: 8px;" onclick="event.stopPropagation()">
-                            <button onclick="window.open('/api-detail.html?project=${api.project_name}&endpoint=${api.path.replace('/', '')}', '_blank')" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                                <i class="fas fa-book"></i> View Docs
-                            </button>
+                        <div style="margin-top: 16px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: #666;">
+                            <i class="fas fa-user" style="font-size: 11px;"></i>
+                            <span>by <strong>${displayAuthor}</strong></span>
                         </div>
                         <div class="api-card-arrow">
                             <i class="fas fa-arrow-right"></i>

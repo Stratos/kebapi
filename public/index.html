@@ -394,14 +394,11 @@
                                     const fullUrl = `${API_URL}/api/${ep.project_name}${ep.path}`;
                                     const publishBtn = ep.published ? `<button class="btn-action btn-unpublish" onclick="togglePublish('${ep.id}', false)"><i class="fas fa-eye-slash"></i> Unpublish</button>` : `<button class="btn-action btn-publish" onclick="togglePublish('${ep.id}', true)"><i class="fas fa-globe"></i> Publish</button>`;
                                     return `
-                                        <div class="endpoint-card" onclick="window.open('${fullUrl}', '_blank')">
+                                        <div class="endpoint-card" onclick="window.open('/api-edit.html?id=${ep.id}', '_blank')">
                                             <div class="endpoint-method">${ep.method}</div>
                                             <div class="endpoint-path">${ep.path}</div>
                                             <div class="endpoint-description">${ep.description}</div>
                                             <div class="endpoint-actions" onclick="event.stopPropagation()">
-                                                <button class="btn-action" onclick="window.open('/api-detail.html?project=${ep.project_name}&endpoint=${ep.path.replace('/', '')}', '_blank')" style="background: #667eea; color: white; border-color: #667eea;">
-                                                    <i class="fas fa-book"></i> Docs
-                                                </button>
                                                 ${ep.schema ? `<button class="btn-action btn-manage" onclick="openDataManager('${ep.id}')"><i class="fas fa-database"></i> Manage</button>` : ''}
                                                 ${publishBtn}
                                             </div>
