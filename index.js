@@ -549,6 +549,7 @@ app.post('/api/create-endpoint', async (req, res) => {
         total: schema.sampleData.length
       },
       user_id: user.id,
+      user_email: user.email,
       createdAt: new Date().toISOString(),
       originalPrompt: prompt,
       schema: schema
@@ -728,6 +729,41 @@ app.get('/', (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════
+// 🌍 MARKETPLACE API (APIs públicas)
+// ═══════════════════════════════════════════════════════════
+app.get('/api/marketplace', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('endpoints')
+      .select(`
+        id,
+        path,
+        method,
+        description,
+        createdAt,
+        user_email
+      `)
+      .eq('published', true)
+      .order('createdAt', { ascending: false });
+
+    if (error) {
+      return res.status(500).json({ success: false, error: error.message });
+    }
+
+    return res.json({
+      success: true,
+      apis: data
+    });
+
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
 // 🚀 INICIAR SERVIDOR
 // ═══════════════════════════════════════════════════════════
 
@@ -758,40 +794,5 @@ async function iniciar() {
     }, 500);
   }
 }
-// ═══════════════════════════════════════════════════════════
-// 🌍 MARKETPLACE API (APIs públicas)
-// ═══════════════════════════════════════════════════════════
-app.get('/api/marketplace', async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('endpoints')
-      .select(`
-        id,
-        path,
-        method,
-        description,
-        createdAt,
-        user_id
-      `)
-      .eq('published', true)
-      .order('createdAt', { ascending: false });
-
-    if (error) {
-      return res.status(500).json({ success: false, error: error.message });
-    }
-
-    return res.json({
-      success: true,
-      apis: data
-    });
-
-  } catch (err) {
-    return res.status(500).json({
-      success: false,
-      error: err.message
-    });
-  }
-});
-
 
 iniciar();
