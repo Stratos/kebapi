@@ -643,6 +643,9 @@ Provide usage examples..." style="min-height: 400px; font-family: 'Monaco', mono
             // Actualizar nav
             document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
             
+            // Actualizar breadcrumb
+            document.getElementById('breadcrumb').textContent = 'Edit API';
+            
             // Construir URL completa
             const fullUrl = `${API_URL}/api/${api.project_name}${api.path}`;
             
@@ -691,14 +694,27 @@ Provide usage examples..." style="min-height: 400px; font-family: 'Monaco', mono
             
             // Resetear a primera tab
             switchEditTab('details');
+            
+            // Scroll to top
+            window.scrollTo(0, 0);
         }
 
         function closeEditSection() {
             document.getElementById('editSection').classList.add('hidden');
             document.getElementById('endpointsSection').classList.remove('hidden');
+            document.getElementById('generatorSection').classList.add('hidden');
+            
+            // Actualizar nav
             document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
             document.querySelectorAll('.nav-item')[1].classList.add('active');
+            
+            // Actualizar breadcrumb
+            document.getElementById('breadcrumb').textContent = 'My APIs';
+            
             currentEditAPI = null;
+            
+            // Scroll to top
+            window.scrollTo(0, 0);
         }
 
         function switchEditTab(tab) {
