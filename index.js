@@ -928,7 +928,7 @@ app.post('/api/generate-docs', async (req, res) => {
       return res.status(400).json({ error: 'Prompt is required' });
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-8b' });
     const result = await model.generateContent(prompt);
     const documentation = result.response.text();
     
