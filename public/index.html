@@ -1200,21 +1200,21 @@
                 const methodClass = 'method-' + ep.method.toLowerCase();
                 const fullUrl = `${API_URL}/api${ep.path}`;
 
-                const publishBtn = ep.is_public
-                    ? `
-                    <button class="btn-secondary"
-                        style="background:#EF4444;color:white;border-color:#EF4444"
-                        onclick="togglePublish('${ep.id}', false)">
-                        <i class="fas fa-eye-slash"></i>
-                        Unpublish
-                    </button>`
-                    : `
-                    <button class="btn-secondary"
-                        style="background:#10B981;color:white;border-color:#10B981"
-                        onclick="togglePublish('${ep.id}', true)">
-                        <i class="fas fa-globe"></i>
-                        Publish
-                    </button>`;
+                const publishBtn = ep.published
+    ? `
+    <button class="btn-secondary"
+        style="background:#EF4444;color:white;border-color:#EF4444"
+        onclick="togglePublish('${ep.id}', false)">
+        <i class="fas fa-eye-slash"></i>
+        Unpublish
+    </button>`
+    : `
+    <button class="btn-secondary"
+        style="background:#10B981;color:white;border-color:#10B981"
+        onclick="togglePublish('${ep.id}', true)">
+        <i class="fas fa-globe"></i>
+        Publish
+    </button>`;
 
                 return `
                 <div class="endpoint-card">
@@ -1264,7 +1264,7 @@ async function togglePublish(endpointId, publish) {
 
     const { error } = await supabase
         .from('endpoints')
-        .update({ is_public: publish })
+        .update({ published: publish })
         .eq('id', endpointId);
 
     if (error) {

@@ -761,36 +761,28 @@ async function iniciar() {
 // ═══════════════════════════════════════════════════════════
 // 🌍 MARKETPLACE API (APIs públicas)
 // ═══════════════════════════════════════════════════════════
-
 app.get('/api/marketplace', async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('endpoints')
-      .select(`
-        id,
-        path,
-        method,
-        description,
-        createdAt,
-        user_id
-      `)
-      .eq('published', true)
-      .order('createdAt', { ascending: false });
+  const { data, error } = await supabase
+    .from('endpoints')
+    .select(`
+      id,
+      path,
+      method,
+      description,
+      createdAt,
+      user_id
+    `)
+    .eq('published', true)
+    .order('createdAt', { ascending: false });
 
-    if (error) throw error;
-
-    res.json({
-      success: true,
-      apis: data || []
-    });
-
-  } catch (err) {
-    console.error('Marketplace error:', err);
-    res.status(500).json({
-      success: false,
-      error: err.message
-    });
+  if (error) {
+    return res.status(500).json({ error: error.message });
   }
+
+  res.json({
+    success: true,
+    apis: data
+  });
 });
 
 
