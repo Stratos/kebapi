@@ -1,23 +1,19 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="es" class="dark">
 <head>
   <meta charset="UTF-8" />
-  <title>Kebapi Marketplace</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- Tailwind -->
+  <title>Kebapi Playground</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdn.tailwindcss.com"></script>
-
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
           colors: {
-            bg: '#0f172a',
-            panel: '#020617',
-            card: '#020617',
-            border: '#1e293b',
+            bg: '#0b0f14',
+            panel: '#111827',
+            border: '#1f2937',
             accent: '#3ecf8e'
           }
         }
@@ -26,58 +22,65 @@
   </script>
 </head>
 
-<body class="bg-bg text-gray-100 min-h-screen">
+<body class="bg-bg text-gray-200 min-h-screen">
 
-  <!-- TOP BAR -->
-  <header class="border-b border-border bg-panel px-6 py-4 flex items-center justify-between">
-    <div class="text-xl font-bold text-white">
-      🌯 Kebapi Marketplace
+  <!-- HEADER -->
+  <header class="border-b border-border">
+    <div class="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+      <h1 class="text-xl font-semibold tracking-tight">
+        Kebapi <span class="text-accent">Playground</span>
+      </h1>
+      <span class="text-sm text-gray-400">
+        Public APIs by the community
+      </span>
     </div>
-
-    <input
-      type="text"
-      placeholder="Search APIs..."
-      class="bg-bg border border-border rounded-md px-4 py-2 w-96 text-sm focus:outline-none focus:ring-1 focus:ring-accent"
-    />
   </header>
 
-  <!-- MAIN LAYOUT -->
-  <div class="flex">
+  <!-- MAIN -->
+  <main class="max-w-7xl mx-auto px-6 py-10">
 
-    <!-- SIDEBAR -->
-    <aside class="w-64 border-r border-border bg-panel min-h-screen p-4">
-      <h3 class="text-xs uppercase tracking-wider text-gray-400 mb-4">
-        Categories
-      </h3>
+    <!-- FILTER BAR -->
+    <div class="flex items-center gap-4 mb-8">
+      <input
+        placeholder="Search APIs..."
+        class="bg-panel border border-border rounded-md px-4 py-2 w-full max-w-sm text-sm outline-none focus:border-accent"
+      />
 
-      <ul class="space-y-2 text-sm">
-        <li class="hover:text-accent cursor-pointer">Open Data</li>
-        <li class="hover:text-accent cursor-pointer">Health</li>
-        <li class="hover:text-accent cursor-pointer">Finance</li>
-        <li class="hover:text-accent cursor-pointer">Weather</li>
-        <li class="hover:text-accent cursor-pointer">AI</li>
-        <li class="hover:text-accent cursor-pointer">Other</li>
-      </ul>
-    </aside>
+      <select
+        class="bg-panel border border-border rounded-md px-3 py-2 text-sm"
+      >
+        <option>All categories</option>
+        <option>Open Data</option>
+        <option>AI</option>
+        <option>Education</option>
+        <option>Fun</option>
+      </select>
+    </div>
 
-    <!-- CONTENT -->
-    <main class="flex-1 p-8">
-      <h1 class="text-3xl font-semibold mb-6">
-        Public APIs
-      </h1>
+    <!-- GRID -->
+    <section
+      id="api-grid"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+    >
 
-      <!-- GRID -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- CARD -->
+      <article class="bg-panel border border-border rounded-lg p-5 hover:border-accent transition">
+        <h2 class="text-lg font-medium mb-1">
+          Open Weather Canary Islands
+        </h2>
+        <p class="text-sm text-gray-400 mb-4">
+          Public weather data for Canary Islands (Open Data)
+        </p>
 
-        <!-- EMPTY STATE (temporal) -->
-        <div class="border border-border rounded-lg p-6 text-gray-400">
-          No public APIs yet.
+        <div class="flex items-center justify-between text-xs text-gray-500">
+          <span>GET /weather/today</span>
+          <span>by @enrique</span>
         </div>
+      </article>
 
-      </div>
-    </main>
+    </section>
 
-  </div>
+  </main>
 
 </body>
 </html>
