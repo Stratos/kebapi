@@ -750,7 +750,12 @@ Provide usage examples..." style="min-height: 400px; font-family: 'Monaco', mono
 
                 if (error) throw error;
 
-                showEditAlert('Changes saved successfully!', 'success');
+                showEditAlert('Changes saved successfully! Reloading endpoints...', 'success');
+                
+                // Recargar endpoints del servidor
+                await fetch(`${API_URL}/api/reload-endpoints`, { method: 'POST' });
+                
+                // Recargar lista local
                 await cargarEndpoints();
                 
                 // Actualizar currentEditAPI
@@ -758,10 +763,37 @@ Provide usage examples..." style="min-height: 400px; font-family: 'Monaco', mono
                 currentEditAPI.path = new_path;
                 currentEditAPI.description = description;
                 
-                // Actualizar hero
+                // Actualizar hero y URL
+                const newFullUrl = `${API_URL}/api/${project_name}${new_path}`;
                 document.getElementById('editProjectBadge').textContent = project_name;
                 document.getElementById('editApiName').textContent = endpoint_name.toUpperCase() + ' API';
                 document.getElementById('editApiDescription').textContent = description;
+                document.getElementById('editApiUrl').textContent = newFullUrl;
+                
+                // Actualizar API Reference si existe
+                if (currentEditAPI.schema) {
+                    const referenceContainer = document.getElementById('editApiReference');
+                    const baseUrl = `${API_URL}/api/${project_name}${new_path}`;
+                    document.getElementById('editBaseUrl').textContent = baseUrl;
+                    
+                    const operations = [
+                        { method: 'GET', path: '', description: 'Get all items' },
+                        { method: 'GET', path: '/:id', description: 'Get one item by ID' },
+                        { method: 'POST', path: '', description: 'Create a new item' },
+                        { method: 'PUT', path: '/:id', description: 'Update an existing item' },
+                        { method: 'DELETE', path: '/:id', description: 'Delete an item' }
+                    ];
+                    
+                    referenceContainer.innerHTML = operations.map(op => `
+                        <div class="crud-item">
+                            <div class="crud-header">
+                                <span class="method-badge method-${op.method.toLowerCase()}">${op.method}</span>
+                                <code class="crud-path">${baseUrl}${op.path}</code>
+                            </div>
+                            <p class="crud-description">${op.description}</p>
+                        </div>
+                    `).join('');
+                }
 
             } catch (error) {
                 console.error('Error:', error);

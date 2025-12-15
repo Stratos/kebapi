@@ -928,7 +928,7 @@ app.post('/api/generate-docs', async (req, res) => {
       return res.status(400).json({ error: 'Prompt is required' });
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
     const result = await model.generateContent(prompt);
     const documentation = result.response.text();
     
@@ -942,6 +942,27 @@ app.post('/api/generate-docs', async (req, res) => {
     res.status(500).json({
       success: false,
       error: error.message || 'Error generating documentation'
+    });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+// 🔄 RELOAD ENDPOINTS (when edited)
+// ═══════════════════════════════════════════════════════════
+app.post('/api/reload-endpoints', async (req, res) => {
+  try {
+    console.log('🔄 Reloading endpoints...');
+    await cargarEndpoints();
+    res.json({ 
+      success: true, 
+      message: 'Endpoints reloaded',
+      total: endpoints.size 
+    });
+  } catch (error) {
+    console.error('Error reloading endpoints:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
     });
   }
 });
