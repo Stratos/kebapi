@@ -1330,11 +1330,16 @@
         }
 
         function openCreateItemModal() {
-            editingItemId = null;
-            document.getElementById('itemModalTitle').textContent = 'Add New Item';
-            buildItemForm();
-            document.getElementById('itemModal').classList.remove('hidden');
-        }
+    if (!currentDataEndpoint || !currentDataEndpoint.schema) {
+        alert('No endpoint selected or schema not available');
+        return;
+    }
+    
+    editingItemId = null;
+    document.getElementById('itemModalTitle').textContent = 'Add New Item';
+    buildItemForm();
+    document.getElementById('itemModal').classList.remove('hidden');
+}
 
         function openEditItemModal(itemId) {
             editingItemId = itemId;
@@ -1344,31 +1349,42 @@
         }
 
         function buildItemForm(itemId = null) {
-            const form = document.getElementById('itemForm');
-            const fields = currentDataEndpoint.schema?.fields || [];
-            
-            let itemData = {};
-            if (itemId) {
-                const item = currentDataItems.find(i => i.id === itemId);
-                itemData = item?.data || {};
-            }
+    const form = document.getElementById('itemForm');
+    
+    if (!currentDataEndpoint || !currentDataEndpoint.schema) {
+        form.innerHTML = '<p style="color: red;">Error: No schema available</p>';
+        return;
+    }
+    
+    const fields = currentDataEndpoint.schema.fields || [];
+    
+    if (fields.length === 0) {
+        form.innerHTML = '<p style="color: var(--text-secondary);">No fields defined in schema</p>';
+        return;
+    }
+    
+    let itemData = {};
+    if (itemId) {
+        const item = currentDataItems.find(i => i.id === itemId);
+        itemData = item?.data || {};
+    }
 
-            form.innerHTML = fields.map(field => `
-                <div class="form-group">
-                    <label class="form-label">
-                        ${field.name}${field.required ? ' *' : ''}
-                    </label>
-                    <input 
-                        type="${field.type === 'number' ? 'number' : 'text'}" 
-                        name="${field.name}"
-                        class="form-input"
-                        value="${itemData[field.name] || ''}"
-                        ${field.required ? 'required' : ''}
-                        placeholder="Enter ${field.name}"
-                    >
-                </div>
-            `).join('');
-        }
+    form.innerHTML = fields.map(field => `
+        <div class="form-group">
+            <label class="form-label">
+                ${field.name}${field.required ? ' *' : ''}
+            </label>
+            <input 
+                type="${field.type === 'number' ? 'number' : 'text'}" 
+                name="${field.name}"
+                class="form-input"
+                value="${itemData[field.name] || ''}"
+                ${field.required ? 'required' : ''}
+                placeholder="Enter ${field.name}"
+            >
+        </div>
+    `).join('');
+}
 
         async function saveItem() {
             const form = document.getElementById('itemForm');
