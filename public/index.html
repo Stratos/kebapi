@@ -23,7 +23,7 @@
         .app-container { display: flex; min-height: 100vh; }
         .sidebar { width: 280px; background: white; border-right: 1px solid #e8e8e8; position: fixed; height: 100vh; display: flex; flex-direction: column; z-index: 100; transition: all 0.3s ease; }
         .sidebar.collapsed { width: 80px; }
-        .sidebar.collapsed .sidebar-logo { font-size: 14px; letter-spacing: 2px; }
+        .sidebar.collapsed .sidebar-logo { font-size: 12px; letter-spacing: 2px; writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); }
         .sidebar.collapsed .nav-item span { display: none; }
         .sidebar.collapsed .nav-label { display: none; }
         .sidebar.collapsed .user-email { display: none; }
@@ -31,8 +31,11 @@
         .sidebar.collapsed .btn-logout { padding: 10px; font-size: 0; }
         .sidebar.collapsed .btn-logout i { margin: 0; font-size: 14px; }
         .sidebar-header { padding: 32px 24px; border-bottom: 1px solid #e8e8e8; display: flex; justify-content: space-between; align-items: center; }
+        .sidebar.collapsed .sidebar-header { flex-direction: column; gap: 16px; padding: 20px 12px; }
         .sidebar-toggle { background: none; border: none; cursor: pointer; color: #666; font-size: 18px; padding: 8px; transition: all 0.2s; }
         .sidebar-toggle:hover { color: #FF5722; }
+        .sidebar.collapsed .sidebar-toggle { order: 1; }
+        .sidebar.collapsed .sidebar-logo { order: 2; writing-mode: vertical-rl; text-orientation: mixed; }
         .sidebar-logo { font-size: 20px; font-weight: 300; letter-spacing: 6px; text-transform: uppercase; }
         .sidebar-nav { flex: 1; padding: 24px 16px; overflow-y: auto; }
         .nav-section { margin-bottom: 32px; }
