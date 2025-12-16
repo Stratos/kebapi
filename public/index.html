@@ -21,8 +21,18 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         .hidden { display: none !important; }
         .app-container { display: flex; min-height: 100vh; }
-        .sidebar { width: 280px; background: white; border-right: 1px solid #e8e8e8; position: fixed; height: 100vh; display: flex; flex-direction: column; z-index: 100; }
-        .sidebar-header { padding: 32px 24px; border-bottom: 1px solid #e8e8e8; }
+        .sidebar { width: 280px; background: white; border-right: 1px solid #e8e8e8; position: fixed; height: 100vh; display: flex; flex-direction: column; z-index: 100; transition: all 0.3s ease; }
+        .sidebar.collapsed { width: 80px; }
+        .sidebar.collapsed .sidebar-logo { font-size: 14px; letter-spacing: 2px; }
+        .sidebar.collapsed .nav-item span { display: none; }
+        .sidebar.collapsed .nav-label { display: none; }
+        .sidebar.collapsed .user-email { display: none; }
+        .sidebar.collapsed .user-avatar { margin: 0 auto; }
+        .sidebar.collapsed .btn-logout { padding: 10px; font-size: 0; }
+        .sidebar.collapsed .btn-logout i { margin: 0; font-size: 14px; }
+        .sidebar-header { padding: 32px 24px; border-bottom: 1px solid #e8e8e8; display: flex; justify-content: space-between; align-items: center; }
+        .sidebar-toggle { background: none; border: none; cursor: pointer; color: #666; font-size: 18px; padding: 8px; transition: all 0.2s; }
+        .sidebar-toggle:hover { color: #FF5722; }
         .sidebar-logo { font-size: 20px; font-weight: 300; letter-spacing: 6px; text-transform: uppercase; }
         .sidebar-nav { flex: 1; padding: 24px 16px; overflow-y: auto; }
         .nav-section { margin-bottom: 32px; }
@@ -39,7 +49,8 @@
         .user-email { font-size: 13px; color: #666; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .btn-logout { width: 100%; padding: 10px; background: #f5f5f5; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; transition: all 0.2s; }
         .btn-logout:hover { background: #FF5722; color: white; }
-        .main-content { flex: 1; margin-left: 280px; }
+        .main-content { flex: 1; margin-left: 280px; transition: margin-left 0.3s ease; }
+        .sidebar.collapsed ~ .main-content { margin-left: 80px; }
         .top-bar { background: #f5f5f5; padding: 12px 32px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: #666; border-bottom: 1px solid #e8e8e8; }
         .hero { margin: 32px; background: #1a1a1a; border-radius: 24px; padding: 80px 60px; color: white; position: relative; }
         .hero-tag { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 40px; opacity: 0.7; }
@@ -171,9 +182,12 @@
 
     <div id="mainApp" class="hidden">
         <div class="app-container">
-            <aside class="sidebar">
+            <aside class="sidebar" id="sidebar">
                 <div class="sidebar-header">
                     <div class="sidebar-logo">KEBAPI</div>
+                    <button class="sidebar-toggle" onclick="toggleSidebar()" style="background: none; border: none; cursor: pointer; color: #666; font-size: 18px; padding: 8px;">
+                        <i class="fas fa-bars"></i>
+                    </button>
                 </div>
                 <nav class="sidebar-nav">
                     <div class="nav-section">
@@ -489,18 +503,31 @@ Provide usage examples..." style="min-height: 400px; font-family: 'Monaco', mono
         }
 
         function showAuth() { document.getElementById('authScreen').classList.remove('hidden'); document.getElementById('loadingScreen').classList.add('hidden'); document.getElementById('mainApp').classList.add('hidden'); }
-        function showApp() { document.getElementById('authScreen').classList.add('hidden'); document.getElementById('loadingScreen').classList.add('hidden'); document.getElementById('mainApp').classList.remove('hidden'); document.getElementById('userEmail').textContent = currentUser.email; document.getElementById('userAvatar').src = currentUser.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.email)}&background=FF5722&color=fff`; cargarEndpoints(); }
+        function showApp() { 
+            document.getElementById('authScreen').classList.add('hidden'); 
+            document.getElementById('loadingScreen').classList.add('hidden'); 
+            document.getElementById('mainApp').classList.remove('hidden'); 
+            document.getElementById('userEmail').textContent = currentUser.email; 
+            document.getElementById('userAvatar').src = currentUser.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.email)}&background=FF5722&color=fff`; 
+            restoreSidebarState(); 
+            cargarEndpoints(); 
+        }
         async function signInWithGoogle() { const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } }); if (error) { alert('Error: ' + error.message); } }
         async function signOut() { const { error } = await supabase.auth.signOut(); if (error) { alert('Error: ' + error.message); } }
         
         function showSection(section) {
             document.getElementById('generatorSection').classList.add('hidden');
             document.getElementById('endpointsSection').classList.add('hidden');
+            document.getElementById('editSection').classList.add('hidden');
             document.getElementById(section + 'Section').classList.remove('hidden');
             document.querySelectorAll('.nav-item').forEach(item => { item.classList.remove('active'); });
             event.target.classList.add('active');
             document.getElementById('breadcrumb').textContent = section === 'generator' ? 'Generator' : 'My APIs';
-            if (section === 'endpoints') { cargarEndpoints(); }
+            if (section === 'endpoints') { 
+                cargarEndpoints();
+                currentEditAPI = null; // Limpiar API en edición
+            }
+            window.scrollTo(0, 0); // Scroll to top
         }
 
         function setPrompt(project, text) { 
@@ -1005,6 +1032,23 @@ Write in a professional, clear style.`;
                 console.error('Error copying:', err);
                 alert('URL copied to clipboard!');
             });
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+            
+            // Guardar estado en localStorage
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            localStorage.setItem('sidebarCollapsed', isCollapsed);
+        }
+
+        // Restaurar estado del sidebar al cargar
+        function restoreSidebarState() {
+            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (isCollapsed) {
+                document.getElementById('sidebar').classList.add('collapsed');
+            }
         }
 
         init();
