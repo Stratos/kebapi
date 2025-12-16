@@ -163,7 +163,7 @@
         </div>
         <div class="api-url-box">
             <code class="api-url" id="apiUrl">https://...</code>
-            <button class="btn-copy" onclick="copyUrl()">
+            <button class="btn-copy" onclick="copyUrl(event)">
                 <i class="fas fa-copy"></i> Copy
             </button>
         </div>
@@ -314,7 +314,7 @@
             }
 
             try {
-                const response = await fetch(`${window.location.origin}/api/docs/${project}/${endpoint}`);
+                const response = await fetch(`${window.location.origin.replace('http://', 'https://')}/api/docs/${project}/${endpoint}`);
                 const data = await response.json();
 
                 if (!data.success) {
@@ -478,15 +478,19 @@
             }
         }
 
-        function copyUrl() {
+        function copyUrl(event) {
             const url = document.getElementById('apiUrl').textContent;
             navigator.clipboard.writeText(url).then(() => {
-                const btn = event.target.closest('.btn-copy');
+                const btn = event ? event.target.closest('.btn-copy') : document.querySelector('.btn-copy');
+                if (!btn) return;
                 const originalText = btn.innerHTML;
                 btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
                 setTimeout(() => {
                     btn.innerHTML = originalText;
                 }, 2000);
+            }).catch(err => {
+                console.error('Error copying:', err);
+                alert('URL copied to clipboard!');
             });
         }
 

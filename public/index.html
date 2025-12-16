@@ -290,7 +290,7 @@
                         <p class="hero-description" id="editApiDescription">Description</p>
                         <div class="api-url-box" style="background: rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; display: flex; align-items: center; justify-content: space-between; margin-top: 24px;">
                             <code class="api-url" id="editApiUrl" style="font-family: 'Monaco', monospace; font-size: 16px; color: #FF5722;">https://...</code>
-                            <button class="btn-copy" onclick="copyEditUrl()" style="padding: 10px 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 8px; color: white; cursor: pointer; transition: all 0.2s;">
+                            <button class="btn-copy" onclick="copyEditUrl(event)" style="padding: 10px 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 8px; color: white; cursor: pointer; transition: all 0.2s;">
                                 <i class="fas fa-copy"></i> Copy
                             </button>
                         </div>
@@ -470,7 +470,7 @@ Provide usage examples..." style="min-height: 400px; font-family: 'Monaco', mono
     </div>
 
     <script>
-        const API_URL = window.location.origin;
+        const API_URL = window.location.origin.replace('http://', 'https://');
         const SUPABASE_URL = 'https://nugcshddtrufgciosrsq.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51Z2NzaGRkdHJ1ZmdjaW9zcnNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2NTUyMTMsImV4cCI6MjA4MTIzMTIxM30.1ECmZ8bG8HasOZ6pH_b3atPg6i9dxTRcPPUXehbiixY';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -991,15 +991,19 @@ Write in a professional, clear style.`;
             }, 5000);
         }
 
-        function copyEditUrl() {
+        function copyEditUrl(event) {
             const url = document.getElementById('editApiUrl').textContent;
             navigator.clipboard.writeText(url).then(() => {
-                const btn = event.target.closest('.btn-copy');
+                const btn = event ? event.target.closest('.btn-copy') : document.querySelector('.btn-copy');
+                if (!btn) return;
                 const originalText = btn.innerHTML;
                 btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
                 setTimeout(() => {
                     btn.innerHTML = originalText;
                 }, 2000);
+            }).catch(err => {
+                console.error('Error copying:', err);
+                alert('URL copied to clipboard!');
             });
         }
 
