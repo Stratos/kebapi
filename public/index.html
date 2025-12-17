@@ -165,10 +165,10 @@
         .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; font-size: 20px; }
         .stat-value { font-size: 32px; font-weight: 300; margin-bottom: 4px; }
         .stat-label { font-size: 13px; color: #666; }
-        .method-tab.active { color: #FF5722 !important; border-bottom-color: #FF5722 !important; }
-        .method-tab:hover { color: #1a1a1a !important; }
+        .method-tab.active { color: #FF5722 !important; border-bottom-color: #FF5722 !important; background: #FFF3E0 !important; }
+        .method-tab:hover { color: #1a1a1a !important; background: #fafafa !important; }
         .method-panel { display: none; }
-        .method-panel.active { display: block; }
+        .method-panel.active { display: block !important; }
         .drop-zone { border: 2px dashed #e8e8e8; border-radius: 16px; padding: 60px 40px; text-align: center; cursor: pointer; transition: all 0.3s; background: #fafafa; }
         .drop-zone:hover { border-color: #FF5722; background: #fff; }
         .drop-zone.dragging { border-color: #FF5722; background: #FFF3E0; }
@@ -260,17 +260,18 @@
 
                     <div class="container">
                         <!-- Method Selector Tabs -->
-                        <div style="background: white; border-radius: 12px 12px 0 0; display: flex; border-bottom: 1px solid #e8e8e8; margin-bottom: 0;">
-                            <button class="method-tab active" onclick="switchMethodTab('ai')" style="padding: 16px 32px; background: none; border: none; font-size: 15px; font-weight: 500; color: #666; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s;">
-                                <i class="fas fa-wand-magic-sparkles"></i> Generate with AI
-                            </button>
-                            <button class="method-tab" onclick="switchMethodTab('upload')" style="padding: 16px 32px; background: none; border: none; font-size: 15px; font-weight: 500; color: #666; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s;">
-                                <i class="fas fa-upload"></i> Upload Dataset
-                            </button>
-                        </div>
+                        <div style="background: white; border-radius: 20px; margin-bottom: 24px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                            <div style="display: flex; border-bottom: 1px solid #e8e8e8;">
+                                <button class="method-tab active" onclick="switchMethodTab('ai')" style="flex: 1; padding: 20px 32px; background: none; border: none; font-size: 15px; font-weight: 500; color: #666; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s;">
+                                    <i class="fas fa-wand-magic-sparkles"></i> Generate with AI
+                                </button>
+                                <button class="method-tab" onclick="switchMethodTab('upload')" style="flex: 1; padding: 20px 32px; background: none; border: none; font-size: 15px; font-weight: 500; color: #666; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s;">
+                                    <i class="fas fa-upload"></i> Upload Dataset
+                                </button>
+                            </div>
 
-                        <!-- AI Generator Form -->
-                        <div id="aiGeneratorForm" class="generator-form method-panel active">
+                            <!-- AI Generator Form -->
+                            <div id="aiGeneratorForm" class="method-panel active" style="padding: 40px;">
                             <label class="form-label">Project Name</label>
                             <input id="projectInput" class="form-input" placeholder="e.g., entertainment, ecommerce, social..." value="">
                             
@@ -302,10 +303,10 @@
                             </div>
                             <div id="result" class="hidden"></div>
                             <div id="error" class="hidden"></div>
-                        </div>
+                            </div>
 
-                        <!-- Upload Dataset Form -->
-                        <div id="uploadGeneratorForm" class="generator-form method-panel hidden">
+                            <!-- Upload Dataset Form -->
+                            <div id="uploadGeneratorForm" class="method-panel hidden" style="padding: 40px;">
                             <label class="form-label">Project Name</label>
                             <input id="uploadProjectInput" class="form-input" placeholder="e.g., data, research, public..." value="">
                             
@@ -354,6 +355,7 @@
                             </div>
                             <div id="uploadResult" class="hidden"></div>
                             <div id="uploadError" class="hidden"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -665,6 +667,7 @@ Provide usage examples..." style="min-height: 400px; font-family: 'Monaco', mono
             document.getElementById('userEmail').textContent = currentUser.email; 
             document.getElementById('userAvatar').src = currentUser.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.email)}&background=FF5722&color=fff`; 
             restoreSidebarState(); 
+            initDropZone(); // Inicializar drag & drop
             cargarEndpoints(); 
         }
         async function signInWithGoogle() { const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } }); if (error) { alert('Error: ' + error.message); } }
@@ -1373,44 +1376,60 @@ Write in a professional, clear style.`;
         let uploadedData = null;
         let detectedSchema = null;
 
+        function initDropZone() {
+            const dropZone = document.getElementById('dropZone');
+            if (!dropZone) return;
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => {
+                    dropZone.classList.add('dragging');
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => {
+                    dropZone.classList.remove('dragging');
+                });
+            });
+
+            dropZone.addEventListener('drop', handleDrop);
+        }
+
         function switchMethodTab(method) {
+            // Remove active from all tabs and panels
             document.querySelectorAll('.method-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.method-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.method-panel').forEach(p => {
+                p.classList.remove('active');
+                p.style.display = 'none';
+            });
             
-            event.target.classList.add('active');
+            // Find and activate the clicked tab
+            const tabs = document.querySelectorAll('.method-tab');
+            tabs.forEach(tab => {
+                if ((method === 'ai' && tab.textContent.includes('Generate with AI')) ||
+                    (method === 'upload' && tab.textContent.includes('Upload Dataset'))) {
+                    tab.classList.add('active');
+                }
+            });
             
-            if (method === 'ai') {
-                document.getElementById('aiGeneratorForm').classList.add('active');
-            } else {
-                document.getElementById('uploadGeneratorForm').classList.add('active');
+            // Show the corresponding panel
+            const panelId = method === 'ai' ? 'aiGeneratorForm' : 'uploadGeneratorForm';
+            const panel = document.getElementById(panelId);
+            if (panel) {
+                panel.classList.add('active');
+                panel.style.display = 'block';
             }
         }
 
         // Drag & Drop handlers
-        const dropZone = document.getElementById('dropZone');
-        
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropZone?.addEventListener(eventName, preventDefaults, false);
-        });
-        
         function preventDefaults(e) {
             e.preventDefault();
             e.stopPropagation();
         }
-        
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone?.addEventListener(eventName, () => {
-                dropZone.classList.add('dragging');
-            });
-        });
-        
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone?.addEventListener(eventName, () => {
-                dropZone.classList.remove('dragging');
-            });
-        });
-        
-        dropZone?.addEventListener('drop', handleDrop);
         
         function handleDrop(e) {
             const dt = e.dataTransfer;
