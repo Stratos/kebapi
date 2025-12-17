@@ -1799,12 +1799,21 @@ Write in a professional, clear style.`;
             }
         }
 
-        function renderDatasets() {
+        async function renderDatasets() {
             const grid = document.getElementById('datasetsGrid');
+            
+            // Cargar endpoints vinculados a cada dataset
+            const { data: allEndpoints } = await supabase
+                .from('endpoints')
+                .select('id, path, project_name, dataset_id')
+                .not('dataset_id', 'is', null);
             
             grid.innerHTML = datasets.map(dataset => {
                 const createdDate = new Date(dataset.created_at).toLocaleDateString();
                 const sizeKB = (dataset.file_size / 1024).toFixed(2);
+                
+                // Encontrar APIs vinculadas a este dataset
+                const linkedAPIs = allEndpoints?.filter(e => e.dataset_id === dataset.id) || [];
                 
                 return `
                     <div class="dataset-card">
@@ -1812,7 +1821,14 @@ Write in a professional, clear style.`;
                             <div class="dataset-icon">
                                 <i class="fas fa-database"></i>
                             </div>
-                            <div class="dataset-badge">${dataset.source_type}</div>
+                            <div style="display: flex; gap: 8px;">
+                                <div class="dataset-badge">${dataset.source_type}</div>
+                                ${linkedAPIs.length > 0 ? `
+                                    <div class="dataset-badge" style="background: #FF5722; color: white;">
+                                        <i class="fas fa-link" style="font-size: 9px;"></i> ${linkedAPIs.length}
+                                    </div>
+                                ` : ''}
+                            </div>
                         </div>
                         <h3 class="dataset-title">${dataset.name}</h3>
                         <p class="dataset-description">${dataset.description || 'No description'}</p>
@@ -1830,14 +1846,35 @@ Write in a professional, clear style.`;
                                 <span>${createdDate}</span>
                             </div>
                         </div>
+                        
+                        ${linkedAPIs.length > 0 ? `
+                            <div style="margin: 16px 0; padding: 12px; background: #f5f5f5; border-radius: 8px;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                    <i class="fas fa-link" style="color: #FF5722; font-size: 12px;"></i>
+                                    <span style="font-size: 12px; font-weight: 600; color: #666;">LINKED APIS (${linkedAPIs.length})</span>
+                                </div>
+                                ${linkedAPIs.map(api => `
+                                    <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px;">
+                                        <i class="fas fa-api" style="color: #FF5722; font-size: 10px;"></i>
+                                        <code style="background: white; padding: 2px 8px; border-radius: 4px; font-size: 11px;">/api/${api.project_name}${api.path}</code>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : `
+                            <div style="margin: 16px 0; padding: 12px; background: #FFF3E0; border-radius: 8px; text-align: center;">
+                                <i class="fas fa-info-circle" style="color: #FF5722; margin-right: 6px;"></i>
+                                <span style="font-size: 12px; color: #666;">No APIs linked yet</span>
+                            </div>
+                        `}
+                        
                         <div class="dataset-actions">
                             <button class="btn-primary" style="flex: 1; padding: 10px;" onclick="createAPIFromDataset('${dataset.id}')">
-                                <i class="fas fa-plus"></i> Create API
+                                <i class="fas fa-${linkedAPIs.length > 0 ? 'copy' : 'plus'}"></i> ${linkedAPIs.length > 0 ? 'Create Another API' : 'Create API'}
                             </button>
-                            <button class="btn-secondary" style="padding: 10px 16px;" onclick="viewDataset('${dataset.id}')">
+                            <button class="btn-secondary" style="padding: 10px 16px;" onclick="viewDataset('${dataset.id}')" title="View dataset details">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            <button class="btn-secondary" style="padding: 10px 16px;" onclick="deleteDataset('${dataset.id}')">
+                            <button class="btn-secondary" style="padding: 10px 16px;" onclick="deleteDataset('${dataset.id}')" title="Delete dataset">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -1904,15 +1941,69 @@ Write in a professional, clear style.`;
             }
         }
 
-        function viewDataset(datasetId) {
+        async function viewDataset(datasetId) {
             const dataset = datasets.find(d => d.id === datasetId);
             if (!dataset) return;
             
-            alert(`Dataset: ${dataset.name}\n\nRows: ${dataset.row_count}\nSchema: ${JSON.stringify(dataset.schema, null, 2)}`);
+            // Cargar APIs vinculadas
+            const { data: linkedAPIs } = await supabase
+                .from('endpoints')
+                .select('id, path, project_name')
+                .eq('dataset_id', datasetId);
+            
+            let message = `📊 DATASET: ${dataset.name}\n\n`;
+            message += `📝 Description: ${dataset.description || 'N/A'}\n`;
+            message += `📁 File: ${dataset.file_name}\n`;
+            message += `📏 Size: ${(dataset.file_size / 1024).toFixed(2)} KB\n`;
+            message += `📊 Rows: ${dataset.row_count}\n`;
+            message += `📅 Created: ${new Date(dataset.created_at).toLocaleString()}\n\n`;
+            
+            if (linkedAPIs && linkedAPIs.length > 0) {
+                message += `🔗 LINKED APIS (${linkedAPIs.length}):\n`;
+                linkedAPIs.forEach(api => {
+                    message += `   • /api/${api.project_name}${api.path}\n`;
+                });
+                message += `\n`;
+            } else {
+                message += `ℹ️ No APIs linked yet\n\n`;
+            }
+            
+            message += `📋 SCHEMA:\n`;
+            dataset.schema.fields.forEach(field => {
+                message += `   • ${field.name} (${field.type})\n`;
+            });
+            
+            if (dataset.sample_data && dataset.sample_data.length > 0) {
+                message += `\n📄 SAMPLE DATA (first 3 rows):\n`;
+                dataset.sample_data.slice(0, 3).forEach((row, i) => {
+                    message += `   ${i + 1}. ${JSON.stringify(row)}\n`;
+                });
+            }
+            
+            alert(message);
         }
 
         async function deleteDataset(datasetId) {
-            if (!confirm('Are you sure you want to delete this dataset?')) return;
+            const dataset = datasets.find(d => d.id === datasetId);
+            if (!dataset) return;
+            
+            // Verificar si hay APIs vinculadas
+            const { data: linkedAPIs } = await supabase
+                .from('endpoints')
+                .select('id, path, project_name')
+                .eq('dataset_id', datasetId);
+            
+            let confirmMessage = `Are you sure you want to delete "${dataset.name}"?`;
+            
+            if (linkedAPIs && linkedAPIs.length > 0) {
+                confirmMessage = `⚠️ WARNING: This dataset has ${linkedAPIs.length} linked API(s):\n\n`;
+                linkedAPIs.forEach(api => {
+                    confirmMessage += `• /api/${api.project_name}${api.path}\n`;
+                });
+                confirmMessage += `\nThe APIs will remain but will no longer be linked to this dataset.\n\nContinue with deletion?`;
+            }
+            
+            if (!confirm(confirmMessage)) return;
             
             try {
                 const { error } = await supabase
