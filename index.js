@@ -21,7 +21,8 @@ const PORT = process.env.PORT || 3000;
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 const endpoints = new Map();
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '50mb' })); // Aumentar límite para datasets grandes
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static('public'));
 
 // ═══════════════════════════════════════════════════════════
@@ -931,7 +932,10 @@ app.post('/api/create-from-dataset', async (req, res) => {
     let finalDatasetId = dataset_id;
 
     // 0. Si save_to_kb es true, guardar dataset primero
+    console.log('📊 save_to_kb:', save_to_kb, 'dataset_id:', dataset_id);
+    
     if (save_to_kb && !dataset_id) {
+      console.log('💾 Guardando dataset en Knowledge Base...');
       const sampleData = data.slice(0, 5);
       
       const { data: newDataset, error: datasetError } = await supabase
@@ -953,9 +957,11 @@ app.post('/api/create-from-dataset', async (req, res) => {
         .single();
 
       if (datasetError) {
-        console.error('Error creating dataset:', datasetError);
+        console.error('❌ Error creating dataset:', datasetError);
+        console.error('Details:', JSON.stringify(datasetError, null, 2));
         // Continue anyway, don't fail
       } else {
+        console.log('✅ Dataset created:', newDataset.id);
         finalDatasetId = newDataset.id;
         
         // Guardar items del dataset
@@ -964,14 +970,26 @@ app.post('/api/create-from-dataset', async (req, res) => {
           data: item
         }));
 
+        console.log(`💾 Guardando ${datasetItems.length} items del dataset...`);
+
         // Insert in chunks
         const chunkSize = 1000;
         for (let i = 0; i < datasetItems.length; i += chunkSize) {
           const chunk = datasetItems.slice(i, i + chunkSize);
-          await supabase.from('dataset_items').insert(chunk);
+          const { error: itemsError } = await supabase.from('dataset_items').insert(chunk);
+          if (itemsError) {
+            console.error('❌ Error inserting dataset items:', itemsError);
+          } else {
+            console.log(`✅ Inserted chunk ${i / chunkSize + 1}`);
+          }
         }
+        
+        console.log('✅ Dataset completo guardado en KB');
       }
+    } else {
+      console.log('⏭️ Skipping KB save (save_to_kb:', save_to_kb, 'dataset_id:', dataset_id, ')');
     }
+
 
     // 1. Create endpoint in database
     const { data: endpoint, error: endpointError } = await supabase
@@ -1561,5 +1579,44 @@ app.get('/api/analytics/endpoint/:endpointId', async (req, res) => {
   } catch (error) {
     console.error('Endpoint analytics error:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+
+// 🔍 DEBUG: Check if datasets table exists
+app.get('/api/debug/check-tables', async (req, res) => {
+  try {
+    // Try to query datasets
+    const { data: datasetsTest, error: datasetsError } = await supabase
+      .from('datasets')
+      .select('*')
+      .limit(1);
+
+    // Try to query dataset_items
+    const { data: itemsTest, error: itemsError } = await supabase
+      .from('dataset_items')
+      .select('*')
+      .limit(1);
+
+    res.json({
+      success: true,
+      tables: {
+        datasets: {
+          exists: !datasetsError,
+          error: datasetsError?.message || null,
+          sample: datasetsTest
+        },
+        dataset_items: {
+          exists: !itemsError,
+          error: itemsError?.message || null,
+          sample: itemsTest
+        }
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
 });

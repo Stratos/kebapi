@@ -1682,6 +1682,12 @@ Write in a professional, clear style.`;
                 return;
             }
             
+            // Validación de tamaño
+            if (uploadedData.length > 50000) {
+                showUploadError(`Dataset too large: ${uploadedData.length} rows. Maximum is 50,000 rows.`);
+                return;
+            }
+            
             const uploadLoading = document.getElementById('uploadLoading');
             const uploadResult = document.getElementById('uploadResult');
             const uploadError = document.getElementById('uploadError');
@@ -1698,6 +1704,17 @@ Write in a professional, clear style.`;
                 // Get file info
                 const fileInput = document.getElementById('fileInput');
                 const file = fileInput.files[0];
+                
+                console.log('📤 Sending request:', {
+                    project_name,
+                    api_name,
+                    rows: uploadedData.length,
+                    file_size: file?.size
+                });
+                
+                // Create abort controller for timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutes timeout
                 
                 const response = await fetch(`${API_URL}/api/create-from-dataset`, {
                     method: 'POST',
@@ -1717,14 +1734,22 @@ Write in a professional, clear style.`;
                         file_name: file?.name || 'unknown',
                         file_size: file?.size || 0,
                         source_type: 'upload'
-                    })
+                    }),
+                    signal: controller.signal
                 });
                 
-                const data = await response.json();
+                clearTimeout(timeoutId);
+                
+                console.log('📥 Response status:', response.status);
                 
                 if (!response.ok) {
-                    throw new Error(data.error || 'Error creating API');
+                    const text = await response.text();
+                    console.error('❌ Response text:', text.substring(0, 500));
+                    throw new Error(`Server error (${response.status}): ${text.substring(0, 200)}`);
                 }
+                
+                const data = await response.json();
+                console.log('✅ Response data:', data);
                 
                 uploadLoading.classList.add('hidden');
                 uploadResult.classList.remove('hidden');
@@ -1735,7 +1760,7 @@ Write in a professional, clear style.`;
                         <strong>✓ API created successfully!</strong><br><br>
                         <code style="color: #065F46; font-weight: 500;">${fullUrl}</code><br><br>
                         <strong>${uploadedData.length}</strong> items imported<br>
-                        <strong>Dataset saved to Knowledge Base</strong>
+                        ${data.datasetSaved ? '<strong>Dataset saved to Knowledge Base</strong>' : ''}
                     </div>
                 `;
                 
