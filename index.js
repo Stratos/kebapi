@@ -992,3 +992,262 @@ app.get('/api/list-models', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// ═══════════════════════════════════════════════════════════
+// 📊 ANALYTICS MIDDLEWARE
+// ═══════════════════════════════════════════════════════════
+async function trackRequest(req, res, next) {
+  const startTime = Date.now();
+  
+  // Interceptar el response para obtener status code
+  const originalSend = res.send;
+  res.send = function(data) {
+    const responseTime = Date.now() - startTime;
+    
+    // Solo trackear rutas de API dinámicas
+    if (req.path.startsWith('/api/') && !req.path.includes('/api/create-') && !req.path.includes('/api/marketplace') && !req.path.includes('/api/docs')) {
+      // Buscar el endpoint_id
+      const pathParts = req.path.split('/');
+      if (pathParts.length >= 4) {
+        const project = pathParts[2];
+        const endpoint = '/' + pathParts[3];
+        
+        // Guardar analytics de forma asíncrona (no bloqueante)
+        supabase
+          .from('endpoints')
+          .select('id')
+          .eq('project_name', project)
+          .eq('path', endpoint)
+          .single()
+          .then(({ data }) => {
+            if (data) {
+              supabase
+                .from('api_requests')
+                .insert({
+                  endpoint_id: data.id,
+                  method: req.method,
+                  path: req.path,
+                  status_code: res.statusCode,
+                  response_time: responseTime,
+                  ip_address: req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+                  user_agent: req.headers['user-agent']
+                })
+                .then(() => {})
+                .catch(err => console.error('Analytics error:', err));
+            }
+          })
+          .catch(() => {});
+      }
+    }
+    
+    originalSend.call(this, data);
+  };
+  
+  next();
+}
+
+// Aplicar middleware a todas las rutas
+app.use(trackRequest);
+
+// ═══════════════════════════════════════════════════════════
+// 📊 ANALYTICS ENDPOINTS
+// ═══════════════════════════════════════════════════════════
+
+// Get analytics summary for all user's APIs
+app.get('/api/analytics/summary', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Get user's endpoints
+    const { data: userEndpoints } = await supabase
+      .from('endpoints')
+      .select('id, path, project_name, description')
+      .eq('user_id', user.id);
+
+    if (!userEndpoints || userEndpoints.length === 0) {
+      return res.json({
+        success: true,
+        totalRequests: 0,
+        endpoints: [],
+        last24h: 0,
+        last7d: 0,
+        last30d: 0
+      });
+    }
+
+    const endpointIds = userEndpoints.map(ep => ep.id);
+
+    // Total requests
+    const { count: totalRequests } = await supabase
+      .from('api_requests')
+      .select('*', { count: 'exact', head: true })
+      .in('endpoint_id', endpointIds);
+
+    // Requests last 24h
+    const now = new Date();
+    const last24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const { count: requests24h } = await supabase
+      .from('api_requests')
+      .select('*', { count: 'exact', head: true })
+      .in('endpoint_id', endpointIds)
+      .gte('created_at', last24h.toISOString());
+
+    // Requests last 7 days
+    const last7d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const { count: requests7d } = await supabase
+      .from('api_requests')
+      .select('*', { count: 'exact', head: true })
+      .in('endpoint_id', endpointIds)
+      .gte('created_at', last7d.toISOString());
+
+    // Requests last 30 days
+    const last30d = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const { count: requests30d } = await supabase
+      .from('api_requests')
+      .select('*', { count: 'exact', head: true })
+      .in('endpoint_id', endpointIds)
+      .gte('created_at', last30d.toISOString());
+
+    // Requests per endpoint
+    const endpointsWithRequests = await Promise.all(
+      userEndpoints.map(async (ep) => {
+        const { count } = await supabase
+          .from('api_requests')
+          .select('*', { count: 'exact', head: true })
+          .eq('endpoint_id', ep.id);
+        
+        return {
+          ...ep,
+          requests: count || 0
+        };
+      })
+    );
+
+    res.json({
+      success: true,
+      totalRequests: totalRequests || 0,
+      last24h: requests24h || 0,
+      last7d: requests7d || 0,
+      last30d: requests30d || 0,
+      endpoints: endpointsWithRequests.sort((a, b) => b.requests - a.requests)
+    });
+
+  } catch (error) {
+    console.error('Analytics summary error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get detailed analytics for specific endpoint
+app.get('/api/analytics/endpoint/:endpointId', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { endpointId } = req.params;
+    const { range = '7d' } = req.query; // 24h, 7d, 30d
+
+    // Verify ownership
+    const { data: endpoint } = await supabase
+      .from('endpoints')
+      .select('*')
+      .eq('id', endpointId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (!endpoint) {
+      return res.status(404).json({ error: 'Endpoint not found' });
+    }
+
+    // Calculate date range
+    const now = new Date();
+    let startDate;
+    switch(range) {
+      case '24h':
+        startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        break;
+      case '30d':
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      default: // 7d
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    }
+
+    // Get requests
+    const { data: requests } = await supabase
+      .from('api_requests')
+      .select('*')
+      .eq('endpoint_id', endpointId)
+      .gte('created_at', startDate.toISOString())
+      .order('created_at', { ascending: true });
+
+    // Calculate metrics
+    const totalRequests = requests?.length || 0;
+    const avgResponseTime = requests?.length 
+      ? Math.round(requests.reduce((sum, r) => sum + (r.response_time || 0), 0) / requests.length)
+      : 0;
+
+    // Status codes distribution
+    const statusCodes = {};
+    requests?.forEach(r => {
+      statusCodes[r.status_code] = (statusCodes[r.status_code] || 0) + 1;
+    });
+
+    // Methods distribution
+    const methods = {};
+    requests?.forEach(r => {
+      methods[r.method] = (methods[r.method] || 0) + 1;
+    });
+
+    // Requests over time (grouped by day/hour)
+    const timeGrouped = {};
+    requests?.forEach(r => {
+      const date = new Date(r.created_at);
+      const key = range === '24h' 
+        ? `${date.getHours()}:00`
+        : date.toISOString().split('T')[0];
+      timeGrouped[key] = (timeGrouped[key] || 0) + 1;
+    });
+
+    res.json({
+      success: true,
+      endpoint: {
+        id: endpoint.id,
+        path: endpoint.path,
+        project_name: endpoint.project_name,
+        description: endpoint.description
+      },
+      metrics: {
+        totalRequests,
+        avgResponseTime,
+        statusCodes,
+        methods,
+        timeGrouped
+      },
+      range
+    });
+
+  } catch (error) {
+    console.error('Endpoint analytics error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});

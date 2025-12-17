@@ -6,6 +6,7 @@
     <title>Kebapi Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; background: #f5f5f5; color: #1a1a1a; }
@@ -158,6 +159,10 @@
         .method-delete { background: #FEE2E2; color: #DC2626; }
         .crud-path { font-family: 'Monaco', monospace; font-size: 14px; font-weight: 500; }
         .crud-description { font-size: 14px; color: #666; }
+        .stat-card { background: white; border-radius: 16px; padding: 24px; }
+        .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; font-size: 20px; }
+        .stat-value { font-size: 32px; font-weight: 300; margin-bottom: 4px; }
+        .stat-label { font-size: 13px; color: #666; }
     </style>
 </head>
 <body>
@@ -202,6 +207,10 @@
                         <div class="nav-item" onclick="showSection('endpoints')">
                             <i class="fas fa-database"></i>
                             <span>My APIs</span>
+                        </div>
+                        <div class="nav-item" onclick="showSection('analytics')">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Analytics</span>
                         </div>
                     </div>
                     <div class="nav-section">
@@ -438,6 +447,76 @@ Provide usage examples..." style="min-height: 400px; font-family: 'Monaco', mono
                     </div>
                 </div>
 
+                <!-- Analytics Section -->
+                <div id="analyticsSection" class="hidden">
+                    <section class="hero">
+                        <div class="hero-tag">Dashboard</div>
+                        <div class="hero-subtitle">Track your APIs</div>
+                        <h1 class="hero-title">Analytics</h1>
+                        <p class="hero-description">Monitor requests, response times, and usage patterns across all your APIs.</p>
+                    </section>
+
+                    <div class="container">
+                        <!-- Summary Cards -->
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 48px;">
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background: #EFF6FF;"><i class="fas fa-server" style="color: #2563EB;"></i></div>
+                                <div class="stat-value" id="totalRequests">0</div>
+                                <div class="stat-label">Total Requests</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background: #ECFDF5;"><i class="fas fa-clock" style="color: #059669;"></i></div>
+                                <div class="stat-value" id="requests24h">0</div>
+                                <div class="stat-label">Last 24 Hours</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background: #FEF3C7;"><i class="fas fa-calendar-week" style="color: #D97706;"></i></div>
+                                <div class="stat-value" id="requests7d">0</div>
+                                <div class="stat-label">Last 7 Days</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background: #FEE2E2;"><i class="fas fa-calendar-alt" style="color: #DC2626;"></i></div>
+                                <div class="stat-value" id="requests30d">0</div>
+                                <div class="stat-label">Last 30 Days</div>
+                            </div>
+                        </div>
+
+                        <!-- API Selector & Chart -->
+                        <div style="background: white; border-radius: 20px; padding: 40px; margin-bottom: 24px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+                                <h2 style="font-size: 24px; font-weight: 500;">Requests Over Time</h2>
+                                <div style="display: flex; gap: 12px; align-items: center;">
+                                    <select id="analyticsApiSelect" class="form-select" style="width: 300px;" onchange="loadEndpointAnalytics()">
+                                        <option value="">All APIs</option>
+                                    </select>
+                                    <select id="analyticsRangeSelect" class="form-select" style="width: 150px;" onchange="loadEndpointAnalytics()">
+                                        <option value="24h">Last 24h</option>
+                                        <option value="7d" selected>Last 7 days</option>
+                                        <option value="30d">Last 30 days</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <canvas id="requestsChart" style="max-height: 300px;"></canvas>
+                        </div>
+
+                        <!-- APIs Table -->
+                        <div style="background: white; border-radius: 20px; padding: 40px;">
+                            <h2 style="font-size: 24px; font-weight: 500; margin-bottom: 24px;">APIs Performance</h2>
+                            <table class="data-table" id="analyticsTable">
+                                <thead>
+                                    <tr>
+                                        <th>API</th>
+                                        <th>Project</th>
+                                        <th>Requests</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="analyticsTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="stats-box">
                     <div class="stats-number">
                         <span class="stats-dot"></span>
@@ -522,15 +601,23 @@ Provide usage examples..." style="min-height: 400px; font-family: 'Monaco', mono
             document.getElementById('generatorSection').classList.add('hidden');
             document.getElementById('endpointsSection').classList.add('hidden');
             document.getElementById('editSection').classList.add('hidden');
+            document.getElementById('analyticsSection').classList.add('hidden');
             document.getElementById(section + 'Section').classList.remove('hidden');
             document.querySelectorAll('.nav-item').forEach(item => { item.classList.remove('active'); });
             event.target.classList.add('active');
-            document.getElementById('breadcrumb').textContent = section === 'generator' ? 'Generator' : 'My APIs';
-            if (section === 'endpoints') { 
+            
+            if (section === 'generator') {
+                document.getElementById('breadcrumb').textContent = 'Generator';
+            } else if (section === 'endpoints') {
+                document.getElementById('breadcrumb').textContent = 'My APIs';
                 cargarEndpoints();
-                currentEditAPI = null; // Limpiar API en edición
+                currentEditAPI = null;
+            } else if (section === 'analytics') {
+                document.getElementById('breadcrumb').textContent = 'Analytics';
+                loadAnalytics();
             }
-            window.scrollTo(0, 0); // Scroll to top
+            
+            window.scrollTo(0, 0);
         }
 
         function setPrompt(project, text) { 
@@ -1052,6 +1139,159 @@ Write in a professional, clear style.`;
             if (isCollapsed) {
                 document.getElementById('sidebar').classList.add('collapsed');
             }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // ANALYTICS FUNCTIONS
+        // ═══════════════════════════════════════════════════════════
+        let analyticsChart = null;
+        let analyticsData = null;
+
+        async function loadAnalytics() {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                
+                const response = await fetch(`${API_URL}/api/analytics/summary`, {
+                    headers: {
+                        'Authorization': `Bearer ${session.access_token}`
+                    }
+                });
+                
+                const data = await response.json();
+                analyticsData = data;
+                
+                // Update summary cards
+                document.getElementById('totalRequests').textContent = data.totalRequests || 0;
+                document.getElementById('requests24h').textContent = data.last24h || 0;
+                document.getElementById('requests7d').textContent = data.last7d || 0;
+                document.getElementById('requests30d').textContent = data.last30d || 0;
+                
+                // Populate API selector
+                const apiSelect = document.getElementById('analyticsApiSelect');
+                apiSelect.innerHTML = '<option value="">All APIs (Summary)</option>';
+                data.endpoints?.forEach(ep => {
+                    const option = document.createElement('option');
+                    option.value = ep.id;
+                    option.textContent = `${ep.project_name}/${ep.path} (${ep.requests} requests)`;
+                    apiSelect.appendChild(option);
+                });
+                
+                // Populate table
+                const tbody = document.getElementById('analyticsTableBody');
+                tbody.innerHTML = data.endpoints?.map(ep => `
+                    <tr>
+                        <td><strong>${ep.path}</strong></td>
+                        <td><span style="padding: 4px 8px; background: #f5f5f5; border-radius: 6px; font-size: 12px;">${ep.project_name}</span></td>
+                        <td><strong>${ep.requests}</strong></td>
+                        <td>
+                            <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="selectApiForAnalytics('${ep.id}')">
+                                <i class="fas fa-chart-bar"></i> View Details
+                            </button>
+                        </td>
+                    </tr>
+                `).join('') || '<tr><td colspan="4" style="text-align: center; padding: 40px; color: #666;">No data yet</td></tr>';
+                
+                // Initialize chart with empty data
+                initChart();
+                
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+            }
+        }
+
+        function selectApiForAnalytics(endpointId) {
+            document.getElementById('analyticsApiSelect').value = endpointId;
+            loadEndpointAnalytics();
+        }
+
+        async function loadEndpointAnalytics() {
+            const endpointId = document.getElementById('analyticsApiSelect').value;
+            const range = document.getElementById('analyticsRangeSelect').value;
+            
+            if (!endpointId) {
+                initChart();
+                return;
+            }
+            
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                
+                const response = await fetch(`${API_URL}/api/analytics/endpoint/${endpointId}?range=${range}`, {
+                    headers: {
+                        'Authorization': `Bearer ${session.access_token}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                // Update chart with time-grouped data
+                const labels = Object.keys(data.metrics.timeGrouped).sort();
+                const values = labels.map(label => data.metrics.timeGrouped[label]);
+                
+                updateChart(labels, values);
+                
+            } catch (error) {
+                console.error('Error loading endpoint analytics:', error);
+            }
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('requestsChart');
+            
+            if (analyticsChart) {
+                analyticsChart.destroy();
+            }
+            
+            analyticsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Requests',
+                        data: [],
+                        borderColor: '#FF5722',
+                        backgroundColor: 'rgba(255, 87, 34, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: '#1a1a1a',
+                            padding: 12,
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: '#FF5722',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChart(labels, data) {
+            if (!analyticsChart) {
+                initChart();
+            }
+            
+            analyticsChart.data.labels = labels;
+            analyticsChart.data.datasets[0].data = data;
+            analyticsChart.update();
         }
 
         init();
