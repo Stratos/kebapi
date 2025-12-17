@@ -1251,3 +1251,136 @@ app.get('/api/analytics/endpoint/:endpointId', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// ═══════════════════════════════════════════════════════════
+// 📊 CREATE API FROM DATASET
+// ═══════════════════════════════════════════════════════════
+app.post('/api/create-from-dataset', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { project_name, api_name, schema, data, description } = req.body;
+
+    if (!project_name || !api_name || !schema || !data) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const path = `/${api_name}`;
+    const method = 'GET';
+
+    // 1. Create endpoint in database
+    const { data: endpoint, error: endpointError } = await supabase
+      .from('endpoints')
+      .insert({
+        user_id: user.id,
+        user_email: user.email,
+        path: path,
+        method: method,
+        project_name: project_name,
+        description: description || `Dataset API for ${api_name}`,
+        schema: schema,
+        published: false
+      })
+      .select()
+      .single();
+
+    if (endpointError) {
+      console.error('Error creating endpoint:', endpointError);
+      return res.status(500).json({ error: 'Error creating endpoint' });
+    }
+
+    // 2. Insert all data items (batch insert)
+    const items = data.map(item => ({
+      endpoint_id: endpoint.id,
+      user_id: user.id,
+      data: item
+    }));
+
+    // Insert in chunks of 1000
+    const chunkSize = 1000;
+    for (let i = 0; i < items.length; i += chunkSize) {
+      const chunk = items.slice(i, i + chunkSize);
+      const { error: itemsError } = await supabase
+        .from('endpoint_items')
+        .insert(chunk);
+      
+      if (itemsError) {
+        console.error('Error inserting items:', itemsError);
+        // Continue anyway, don't fail completely
+      }
+    }
+
+    // 3. Register routes
+    const fullPath = `/api/${project_name}${path}`;
+
+    // GET all items
+    app.get(fullPath, async (req, res) => {
+      try {
+        const { data: items } = await supabase
+          .from('endpoint_items')
+          .select('data')
+          .eq('endpoint_id', endpoint.id);
+        
+        res.json({
+          success: true,
+          data: items?.map(i => i.data) || [],
+          total: items?.length || 0
+        });
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    });
+
+    // GET by ID
+    app.get(`${fullPath}/:id`, async (req, res) => {
+      try {
+        const { data: item } = await supabase
+          .from('endpoint_items')
+          .select('data')
+          .eq('endpoint_id', endpoint.id)
+          .eq('id', req.params.id)
+          .single();
+        
+        if (!item) {
+          return res.status(404).json({ error: 'Item not found' });
+        }
+        
+        res.json({
+          success: true,
+          data: item.data
+        });
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    });
+
+    // Store in endpoints Map
+    endpoints.set(endpoint.id, endpoint);
+
+    console.log(`✓ Dataset API created: ${fullPath} with ${data.length} items`);
+
+    res.json({
+      success: true,
+      endpoint: endpoint,
+      itemsImported: data.length,
+      message: 'API created successfully from dataset'
+    });
+
+  } catch (error) {
+    console.error('Error in create-from-dataset:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error creating API from dataset'
+    });
+  }
+});

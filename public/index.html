@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; background: #f5f5f5; color: #1a1a1a; }
@@ -164,6 +165,14 @@
         .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; font-size: 20px; }
         .stat-value { font-size: 32px; font-weight: 300; margin-bottom: 4px; }
         .stat-label { font-size: 13px; color: #666; }
+        .method-tab.active { color: #FF5722 !important; border-bottom-color: #FF5722 !important; }
+        .method-tab:hover { color: #1a1a1a !important; }
+        .method-panel { display: none; }
+        .method-panel.active { display: block; }
+        .drop-zone { border: 2px dashed #e8e8e8; border-radius: 16px; padding: 60px 40px; text-align: center; cursor: pointer; transition: all 0.3s; background: #fafafa; }
+        .drop-zone:hover { border-color: #FF5722; background: #fff; }
+        .drop-zone.dragging { border-color: #FF5722; background: #FFF3E0; }
+        .drop-zone-content { pointer-events: none; }
     </style>
 </head>
 <body>
@@ -250,7 +259,18 @@
                     </section>
 
                     <div class="container">
-                        <div class="generator-form">
+                        <!-- Method Selector Tabs -->
+                        <div style="background: white; border-radius: 12px 12px 0 0; display: flex; border-bottom: 1px solid #e8e8e8; margin-bottom: 0;">
+                            <button class="method-tab active" onclick="switchMethodTab('ai')" style="padding: 16px 32px; background: none; border: none; font-size: 15px; font-weight: 500; color: #666; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s;">
+                                <i class="fas fa-wand-magic-sparkles"></i> Generate with AI
+                            </button>
+                            <button class="method-tab" onclick="switchMethodTab('upload')" style="padding: 16px 32px; background: none; border: none; font-size: 15px; font-weight: 500; color: #666; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s;">
+                                <i class="fas fa-upload"></i> Upload Dataset
+                            </button>
+                        </div>
+
+                        <!-- AI Generator Form -->
+                        <div id="aiGeneratorForm" class="generator-form method-panel active">
                             <label class="form-label">Project Name</label>
                             <input id="projectInput" class="form-input" placeholder="e.g., entertainment, ecommerce, social..." value="">
                             
@@ -282,6 +302,58 @@
                             </div>
                             <div id="result" class="hidden"></div>
                             <div id="error" class="hidden"></div>
+                        </div>
+
+                        <!-- Upload Dataset Form -->
+                        <div id="uploadGeneratorForm" class="generator-form method-panel hidden">
+                            <label class="form-label">Project Name</label>
+                            <input id="uploadProjectInput" class="form-input" placeholder="e.g., data, research, public..." value="">
+                            
+                            <label class="form-label">API Name</label>
+                            <input id="uploadApiNameInput" class="form-input" placeholder="e.g., world-cities, covid-data..." value="">
+
+                            <label class="form-label">Upload Your Dataset</label>
+                            <div id="dropZone" class="drop-zone">
+                                <input type="file" id="fileInput" accept=".csv,.json,.xlsx" style="display: none;" onchange="handleFileSelect(event)">
+                                <div class="drop-zone-content" onclick="document.getElementById('fileInput').click()">
+                                    <i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: #FF5722; margin-bottom: 16px;"></i>
+                                    <p style="font-size: 16px; font-weight: 500; margin-bottom: 8px;">Drop your file here or click to browse</p>
+                                    <p style="font-size: 13px; color: #666;">Supports CSV, JSON, Excel (max 10MB, 50K rows)</p>
+                                </div>
+                            </div>
+
+                            <div id="filePreview" class="hidden" style="margin-top: 24px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                                    <div>
+                                        <p style="font-weight: 500; margin-bottom: 4px;"><i class="fas fa-file"></i> <span id="fileName"></span></p>
+                                        <p style="font-size: 13px; color: #666;"><span id="fileStats"></span></p>
+                                    </div>
+                                    <button onclick="clearFile()" style="padding: 8px 16px; background: #e8e8e8; border: none; border-radius: 8px; cursor: pointer;">
+                                        <i class="fas fa-times"></i> Remove
+                                    </button>
+                                </div>
+
+                                <div style="background: #f5f5f5; border-radius: 12px; padding: 16px; max-height: 300px; overflow: auto;">
+                                    <p style="font-size: 13px; font-weight: 600; margin-bottom: 12px; color: #666;">PREVIEW (first 5 rows)</p>
+                                    <div id="previewTable"></div>
+                                </div>
+
+                                <div style="margin-top: 24px;">
+                                    <p style="font-size: 14px; font-weight: 500; margin-bottom: 12px;">Detected Schema:</p>
+                                    <div id="schemaPreview" style="background: #f5f5f5; border-radius: 12px; padding: 16px; font-family: Monaco, monospace; font-size: 13px;"></div>
+                                </div>
+                            </div>
+
+                            <button class="btn-generate" id="uploadBtn" onclick="generateFromDataset()" disabled style="margin-top: 24px;">
+                                <i class="fas fa-database"></i> Generate API from Dataset
+                            </button>
+
+                            <div id="uploadLoading" class="loading hidden" style="text-align: center; padding: 40px;">
+                                <div class="spinner" style="margin: 0 auto 16px;"></div>
+                                <p style="color: #666;">Processing dataset...</p>
+                            </div>
+                            <div id="uploadResult" class="hidden"></div>
+                            <div id="uploadError" class="hidden"></div>
                         </div>
                     </div>
                 </div>
@@ -1293,6 +1365,309 @@ Write in a professional, clear style.`;
             analyticsChart.data.labels = labels;
             analyticsChart.data.datasets[0].data = data;
             analyticsChart.update();
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // DATASET UPLOAD FUNCTIONS
+        // ═══════════════════════════════════════════════════════════
+        let uploadedData = null;
+        let detectedSchema = null;
+
+        function switchMethodTab(method) {
+            document.querySelectorAll('.method-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.method-panel').forEach(p => p.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            
+            if (method === 'ai') {
+                document.getElementById('aiGeneratorForm').classList.add('active');
+            } else {
+                document.getElementById('uploadGeneratorForm').classList.add('active');
+            }
+        }
+
+        // Drag & Drop handlers
+        const dropZone = document.getElementById('dropZone');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone?.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone?.addEventListener(eventName, () => {
+                dropZone.classList.add('dragging');
+            });
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone?.addEventListener(eventName, () => {
+                dropZone.classList.remove('dragging');
+            });
+        });
+        
+        dropZone?.addEventListener('drop', handleDrop);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                processFile(files[0]);
+            }
+        }
+        
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                processFile(file);
+            }
+        }
+        
+        function processFile(file) {
+            // Validate file size (10MB max)
+            if (file.size > 10 * 1024 * 1024) {
+                showUploadError('File too large. Maximum size is 10MB.');
+                return;
+            }
+            
+            const fileName = file.name;
+            const fileExtension = fileName.split('.').pop().toLowerCase();
+            
+            document.getElementById('fileName').textContent = fileName;
+            document.getElementById('fileStats').textContent = `${(file.size / 1024).toFixed(2)} KB`;
+            
+            if (fileExtension === 'csv') {
+                parseCSV(file);
+            } else if (fileExtension === 'json') {
+                parseJSON(file);
+            } else {
+                showUploadError('Unsupported file format. Please upload CSV or JSON.');
+            }
+        }
+        
+        function parseCSV(file) {
+            Papa.parse(file, {
+                header: true,
+                dynamicTyping: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    if (results.errors.length > 0) {
+                        showUploadError('Error parsing CSV: ' + results.errors[0].message);
+                        return;
+                    }
+                    
+                    // Limit to 50K rows
+                    const data = results.data.slice(0, 50000);
+                    uploadedData = data;
+                    
+                    // Auto-detect schema
+                    detectedSchema = detectSchema(data);
+                    
+                    // Show preview
+                    showPreview(data, detectedSchema);
+                    
+                    document.getElementById('uploadBtn').disabled = false;
+                },
+                error: function(error) {
+                    showUploadError('Error parsing CSV: ' + error.message);
+                }
+            });
+        }
+        
+        function parseJSON(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    let data = JSON.parse(e.target.result);
+                    
+                    // If it's an object with an array property, extract it
+                    if (!Array.isArray(data) && typeof data === 'object') {
+                        const keys = Object.keys(data);
+                        const arrayKey = keys.find(k => Array.isArray(data[k]));
+                        if (arrayKey) {
+                            data = data[arrayKey];
+                        } else {
+                            showUploadError('JSON must contain an array of objects');
+                            return;
+                        }
+                    }
+                    
+                    if (!Array.isArray(data)) {
+                        showUploadError('JSON must be an array of objects');
+                        return;
+                    }
+                    
+                    // Limit to 50K rows
+                    data = data.slice(0, 50000);
+                    uploadedData = data;
+                    
+                    // Auto-detect schema
+                    detectedSchema = detectSchema(data);
+                    
+                    // Show preview
+                    showPreview(data, detectedSchema);
+                    
+                    document.getElementById('uploadBtn').disabled = false;
+                    
+                } catch (error) {
+                    showUploadError('Error parsing JSON: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        function detectSchema(data) {
+            if (!data || data.length === 0) return null;
+            
+            const sample = data.slice(0, 100);
+            const schema = { fields: [] };
+            
+            const firstRow = sample[0];
+            Object.keys(firstRow).forEach(key => {
+                const values = sample.map(row => row[key]).filter(v => v != null);
+                
+                let type = 'text';
+                if (values.every(v => typeof v === 'number')) {
+                    type = 'number';
+                } else if (values.every(v => typeof v === 'boolean')) {
+                    type = 'boolean';
+                }
+                
+                schema.fields.push({
+                    name: key,
+                    type: type,
+                    required: values.length === sample.length
+                });
+            });
+            
+            return schema;
+        }
+        
+        function showPreview(data, schema) {
+            document.getElementById('filePreview').classList.remove('hidden');
+            
+            // Preview table (first 5 rows)
+            const preview = data.slice(0, 5);
+            const headers = Object.keys(preview[0]);
+            
+            let tableHTML = '<table style="width: 100%; font-size: 12px; border-collapse: collapse;">';
+            tableHTML += '<thead><tr>';
+            headers.forEach(h => {
+                tableHTML += `<th style="text-align: left; padding: 8px; border-bottom: 2px solid #ddd; font-weight: 600;">${h}</th>`;
+            });
+            tableHTML += '</tr></thead><tbody>';
+            
+            preview.forEach(row => {
+                tableHTML += '<tr>';
+                headers.forEach(h => {
+                    const value = row[h];
+                    const displayValue = value === null || value === undefined ? '-' : String(value);
+                    const truncated = displayValue.length > 30 ? displayValue.substring(0, 30) + '...' : displayValue;
+                    tableHTML += `<td style="padding: 8px; border-bottom: 1px solid #eee;" title="${displayValue}">${truncated}</td>`;
+                });
+                tableHTML += '</tr>';
+            });
+            
+            tableHTML += '</tbody></table>';
+            document.getElementById('previewTable').innerHTML = tableHTML;
+            
+            // Schema preview
+            const schemaJSON = JSON.stringify(schema, null, 2);
+            document.getElementById('schemaPreview').textContent = schemaJSON;
+        }
+        
+        function clearFile() {
+            uploadedData = null;
+            detectedSchema = null;
+            document.getElementById('fileInput').value = '';
+            document.getElementById('filePreview').classList.add('hidden');
+            document.getElementById('uploadBtn').disabled = true;
+            document.getElementById('uploadResult').classList.add('hidden');
+            document.getElementById('uploadError').classList.add('hidden');
+        }
+        
+        async function generateFromDataset() {
+            const project_name = document.getElementById('uploadProjectInput').value.trim() || 'data';
+            const api_name = document.getElementById('uploadApiNameInput').value.trim();
+            
+            if (!api_name) {
+                showUploadError('Please provide an API name');
+                return;
+            }
+            
+            if (!uploadedData || !detectedSchema) {
+                showUploadError('Please upload a dataset first');
+                return;
+            }
+            
+            const uploadLoading = document.getElementById('uploadLoading');
+            const uploadResult = document.getElementById('uploadResult');
+            const uploadError = document.getElementById('uploadError');
+            const uploadBtn = document.getElementById('uploadBtn');
+            
+            uploadLoading.classList.remove('hidden');
+            uploadResult.classList.add('hidden');
+            uploadError.classList.add('hidden');
+            uploadBtn.disabled = true;
+            
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                
+                const response = await fetch(`${API_URL}/api/create-from-dataset`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`
+                    },
+                    body: JSON.stringify({
+                        project_name,
+                        api_name,
+                        schema: detectedSchema,
+                        data: uploadedData,
+                        description: `Dataset API with ${uploadedData.length} items`
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Error creating API');
+                }
+                
+                uploadLoading.classList.add('hidden');
+                uploadResult.classList.remove('hidden');
+                
+                const fullUrl = `${API_URL}/api/${data.endpoint.project_name}${data.endpoint.path}`;
+                uploadResult.innerHTML = `
+                    <div class="alert alert-success">
+                        <strong>✓ API created successfully!</strong><br><br>
+                        <code style="color: #065F46; font-weight: 500;">${fullUrl}</code><br><br>
+                        <strong>${uploadedData.length}</strong> items imported
+                    </div>
+                `;
+                
+                clearFile();
+                await cargarEndpoints();
+                
+            } catch (err) {
+                uploadLoading.classList.add('hidden');
+                showUploadError(err.message);
+            } finally {
+                uploadBtn.disabled = false;
+            }
+        }
+        
+        function showUploadError(message) {
+            const uploadError = document.getElementById('uploadError');
+            uploadError.innerHTML = `<div class="alert alert-error">${message}</div>`;
+            uploadError.classList.remove('hidden');
+            setTimeout(() => {
+                uploadError.classList.add('hidden');
+            }, 5000);
         }
 
         init();
