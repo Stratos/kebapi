@@ -173,6 +173,16 @@
         .drop-zone:hover { border-color: #FF5722; background: #fff; }
         .drop-zone.dragging { border-color: #FF5722; background: #FFF3E0; }
         .drop-zone-content { pointer-events: none; }
+        .dataset-card { background: white; border-radius: 16px; padding: 24px; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .dataset-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .dataset-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+        .dataset-icon { width: 48px; height: 48px; background: #FFF3E0; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #FF5722; font-size: 20px; }
+        .dataset-badge { padding: 4px 8px; background: #f5f5f5; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #666; }
+        .dataset-title { font-size: 18px; font-weight: 500; margin-bottom: 8px; }
+        .dataset-description { font-size: 13px; color: #666; margin-bottom: 16px; line-height: 1.5; }
+        .dataset-meta { display: flex; gap: 16px; margin-bottom: 16px; font-size: 12px; color: #999; }
+        .dataset-meta-item { display: flex; align-items: center; gap: 6px; }
+        .dataset-actions { display: flex; gap: 8px; }
     </style>
 </head>
 <body>
@@ -217,6 +227,10 @@
                         <div class="nav-item" onclick="showSection('endpoints')">
                             <i class="fas fa-database"></i>
                             <span>My APIs</span>
+                        </div>
+                        <div class="nav-item" onclick="showSection('knowledgebase')">
+                            <i class="fas fa-layer-group"></i>
+                            <span>Knowledge Base</span>
                         </div>
                         <div class="nav-item" onclick="showSection('analytics')">
                             <i class="fas fa-chart-line"></i>
@@ -599,6 +613,47 @@ Provide usage examples..." style="min-height: 400px; font-family: 'Monaco', mono
                     </div>
                     <div class="stats-label">APIs created</div>
                 </div>
+
+                <!-- Knowledge Base Section -->
+                <div id="knowledgebaseSection" class="hidden">
+                    <section class="hero">
+                        <div class="hero-tag">Data Management</div>
+                        <div class="hero-subtitle">Your datasets & data sources</div>
+                        <h1 class="hero-title">Knowledge Base</h1>
+                        <p class="hero-description">Manage your datasets, create multiple APIs from the same data source, and keep everything synchronized.</p>
+                    </section>
+
+                    <div class="container">
+                        <!-- Header with actions -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+                            <div>
+                                <h2 style="font-size: 24px; font-weight: 500; margin-bottom: 8px;">My Datasets</h2>
+                                <p style="font-size: 14px; color: #666;">Upload and manage data sources that can be used by multiple APIs</p>
+                            </div>
+                            <button class="btn-primary" onclick="showUploadDatasetModal()">
+                                <i class="fas fa-upload"></i> Upload Dataset
+                            </button>
+                        </div>
+
+                        <!-- Datasets Grid -->
+                        <div id="datasetsGrid" class="hidden" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 24px;"></div>
+
+                        <!-- Loading -->
+                        <div id="datasetsLoading" class="loading hidden">
+                            <div class="spinner"></div>
+                            <p style="color: #666;">Loading datasets...</p>
+                        </div>
+
+                        <!-- Empty State -->
+                        <div id="datasetsEmpty" class="empty-state hidden">
+                            <h3 class="empty-title">No datasets yet</h3>
+                            <p class="empty-description">Upload your first dataset to get started</p>
+                            <button class="btn-primary" onclick="showUploadDatasetModal()" style="margin-top: 24px;">
+                                <i class="fas fa-upload"></i> Upload Dataset
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </main>
         </div>
     </div>
@@ -678,6 +733,7 @@ Provide usage examples..." style="min-height: 400px; font-family: 'Monaco', mono
             document.getElementById('endpointsSection').classList.add('hidden');
             document.getElementById('editSection').classList.add('hidden');
             document.getElementById('analyticsSection').classList.add('hidden');
+            document.getElementById('knowledgebaseSection').classList.add('hidden');
             document.getElementById(section + 'Section').classList.remove('hidden');
             document.querySelectorAll('.nav-item').forEach(item => { item.classList.remove('active'); });
             event.target.classList.add('active');
@@ -691,6 +747,9 @@ Provide usage examples..." style="min-height: 400px; font-family: 'Monaco', mono
             } else if (section === 'analytics') {
                 document.getElementById('breadcrumb').textContent = 'Analytics';
                 loadAnalytics();
+            } else if (section === 'knowledgebase') {
+                document.getElementById('breadcrumb').textContent = 'Knowledge Base';
+                loadDatasets();
             }
             
             window.scrollTo(0, 0);
@@ -1687,6 +1746,177 @@ Write in a professional, clear style.`;
             setTimeout(() => {
                 uploadError.classList.add('hidden');
             }, 5000);
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // KNOWLEDGE BASE FUNCTIONS
+        // ═══════════════════════════════════════════════════════════
+        let datasets = [];
+
+        async function loadDatasets() {
+            const loading = document.getElementById('datasetsLoading');
+            const grid = document.getElementById('datasetsGrid');
+            const empty = document.getElementById('datasetsEmpty');
+            
+            loading.classList.remove('hidden');
+            grid.classList.add('hidden');
+            empty.classList.add('hidden');
+            
+            try {
+                const { data, error } = await supabase
+                    .from('datasets')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                
+                datasets = data || [];
+                
+                loading.classList.add('hidden');
+                
+                if (datasets.length === 0) {
+                    empty.classList.remove('hidden');
+                } else {
+                    grid.classList.remove('hidden');
+                    renderDatasets();
+                }
+            } catch (error) {
+                console.error('Error loading datasets:', error);
+                loading.classList.add('hidden');
+                empty.classList.remove('hidden');
+            }
+        }
+
+        function renderDatasets() {
+            const grid = document.getElementById('datasetsGrid');
+            
+            grid.innerHTML = datasets.map(dataset => {
+                const createdDate = new Date(dataset.created_at).toLocaleDateString();
+                const sizeKB = (dataset.file_size / 1024).toFixed(2);
+                
+                return `
+                    <div class="dataset-card">
+                        <div class="dataset-card-header">
+                            <div class="dataset-icon">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <div class="dataset-badge">${dataset.source_type}</div>
+                        </div>
+                        <h3 class="dataset-title">${dataset.name}</h3>
+                        <p class="dataset-description">${dataset.description || 'No description'}</p>
+                        <div class="dataset-meta">
+                            <div class="dataset-meta-item">
+                                <i class="fas fa-table"></i>
+                                <span>${dataset.row_count} rows</span>
+                            </div>
+                            <div class="dataset-meta-item">
+                                <i class="fas fa-file"></i>
+                                <span>${sizeKB} KB</span>
+                            </div>
+                            <div class="dataset-meta-item">
+                                <i class="fas fa-calendar"></i>
+                                <span>${createdDate}</span>
+                            </div>
+                        </div>
+                        <div class="dataset-actions">
+                            <button class="btn-primary" style="flex: 1; padding: 10px;" onclick="createAPIFromDataset('${dataset.id}')">
+                                <i class="fas fa-plus"></i> Create API
+                            </button>
+                            <button class="btn-secondary" style="padding: 10px 16px;" onclick="viewDataset('${dataset.id}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-secondary" style="padding: 10px 16px;" onclick="deleteDataset('${dataset.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showUploadDatasetModal() {
+            // Por ahora, redirigir al generator con tab upload
+            showSection('generator');
+            switchMethodTab('upload');
+        }
+
+        async function createAPIFromDataset(datasetId) {
+            const dataset = datasets.find(d => d.id === datasetId);
+            if (!dataset) return;
+            
+            const apiName = prompt('API Name:', dataset.name.toLowerCase().replace(/\s+/g, '-'));
+            if (!apiName) return;
+            
+            const projectName = prompt('Project Name:', 'data');
+            if (!projectName) return;
+            
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                
+                // Obtener los datos del dataset
+                const { data: items } = await supabase
+                    .from('dataset_items')
+                    .select('data')
+                    .eq('dataset_id', datasetId);
+                
+                const dataArray = items?.map(i => i.data) || [];
+                
+                const response = await fetch(`${API_URL}/api/create-from-dataset`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`
+                    },
+                    body: JSON.stringify({
+                        project_name: projectName,
+                        api_name: apiName,
+                        schema: dataset.schema,
+                        data: dataArray,
+                        description: dataset.description || `API from ${dataset.name}`,
+                        dataset_id: dataset.id
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.error || 'Error creating API');
+                }
+                
+                alert('✓ API created successfully!');
+                showSection('endpoints');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error creating API: ' + error.message);
+            }
+        }
+
+        function viewDataset(datasetId) {
+            const dataset = datasets.find(d => d.id === datasetId);
+            if (!dataset) return;
+            
+            alert(`Dataset: ${dataset.name}\n\nRows: ${dataset.row_count}\nSchema: ${JSON.stringify(dataset.schema, null, 2)}`);
+        }
+
+        async function deleteDataset(datasetId) {
+            if (!confirm('Are you sure you want to delete this dataset?')) return;
+            
+            try {
+                const { error } = await supabase
+                    .from('datasets')
+                    .delete()
+                    .eq('id', datasetId);
+                
+                if (error) throw error;
+                
+                await loadDatasets();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error deleting dataset: ' + error.message);
+            }
         }
 
         init();

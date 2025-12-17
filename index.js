@@ -773,6 +773,126 @@ app.get('/api/marketplace', async (req, res) => {
 // ═══════════════════════════════════════════════════════════
 // 📊 CREATE API FROM DATASET
 // ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// 📚 KNOWLEDGE BASE ENDPOINTS
+// ═══════════════════════════════════════════════════════════
+
+// List user's datasets
+app.get('/api/datasets', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { data: datasets, error } = await supabase
+      .from('datasets')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      datasets: datasets || []
+    });
+
+  } catch (error) {
+    console.error('Error fetching datasets:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get dataset items
+app.get('/api/datasets/:datasetId/items', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { datasetId } = req.params;
+
+    // Verify ownership
+    const { data: dataset } = await supabase
+      .from('datasets')
+      .select('*')
+      .eq('id', datasetId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (!dataset) {
+      return res.status(404).json({ error: 'Dataset not found' });
+    }
+
+    const { data: items } = await supabase
+      .from('dataset_items')
+      .select('*')
+      .eq('dataset_id', datasetId);
+
+    res.json({
+      success: true,
+      items: items || []
+    });
+
+  } catch (error) {
+    console.error('Error fetching dataset items:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete dataset
+app.delete('/api/datasets/:datasetId', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { datasetId } = req.params;
+
+    // Verify ownership and delete
+    const { error } = await supabase
+      .from('datasets')
+      .delete()
+      .eq('id', datasetId)
+      .eq('user_id', user.id);
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      message: 'Dataset deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Error deleting dataset:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/create-from-dataset', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
