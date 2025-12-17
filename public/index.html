@@ -1695,6 +1695,10 @@ Write in a professional, clear style.`;
             try {
                 const { data: { session } } = await supabase.auth.getSession();
                 
+                // Get file info
+                const fileInput = document.getElementById('fileInput');
+                const file = fileInput.files[0];
+                
                 const response = await fetch(`${API_URL}/api/create-from-dataset`, {
                     method: 'POST',
                     headers: {
@@ -1706,7 +1710,13 @@ Write in a professional, clear style.`;
                         api_name,
                         schema: detectedSchema,
                         data: uploadedData,
-                        description: `Dataset API with ${uploadedData.length} items`
+                        description: `Dataset API with ${uploadedData.length} items`,
+                        // Dataset metadata
+                        save_to_kb: true,
+                        dataset_name: api_name,
+                        file_name: file?.name || 'unknown',
+                        file_size: file?.size || 0,
+                        source_type: 'upload'
                     })
                 });
                 
@@ -1724,7 +1734,8 @@ Write in a professional, clear style.`;
                     <div class="alert alert-success">
                         <strong>✓ API created successfully!</strong><br><br>
                         <code style="color: #065F46; font-weight: 500;">${fullUrl}</code><br><br>
-                        <strong>${uploadedData.length}</strong> items imported
+                        <strong>${uploadedData.length}</strong> items imported<br>
+                        <strong>Dataset saved to Knowledge Base</strong>
                     </div>
                 `;
                 

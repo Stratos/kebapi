@@ -907,7 +907,19 @@ app.post('/api/create-from-dataset', async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { project_name, api_name, schema, data, description } = req.body;
+    const { 
+      project_name, 
+      api_name, 
+      schema, 
+      data, 
+      description,
+      save_to_kb,
+      dataset_name,
+      file_name,
+      file_size,
+      source_type,
+      dataset_id // Si viene de un dataset existente
+    } = req.body;
 
     if (!project_name || !api_name || !schema || !data) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -915,6 +927,51 @@ app.post('/api/create-from-dataset', async (req, res) => {
 
     const path = `/${api_name}`;
     const method = 'GET';
+
+    let finalDatasetId = dataset_id;
+
+    // 0. Si save_to_kb es true, guardar dataset primero
+    if (save_to_kb && !dataset_id) {
+      const sampleData = data.slice(0, 5);
+      
+      const { data: newDataset, error: datasetError } = await supabase
+        .from('datasets')
+        .insert({
+          user_id: user.id,
+          user_email: user.email,
+          name: dataset_name || api_name,
+          description: description || `Dataset for ${api_name}`,
+          file_name: file_name || 'upload',
+          file_size: file_size || 0,
+          row_count: data.length,
+          schema: schema,
+          sample_data: sampleData,
+          source_type: source_type || 'upload',
+          source_url: null
+        })
+        .select()
+        .single();
+
+      if (datasetError) {
+        console.error('Error creating dataset:', datasetError);
+        // Continue anyway, don't fail
+      } else {
+        finalDatasetId = newDataset.id;
+        
+        // Guardar items del dataset
+        const datasetItems = data.map(item => ({
+          dataset_id: newDataset.id,
+          data: item
+        }));
+
+        // Insert in chunks
+        const chunkSize = 1000;
+        for (let i = 0; i < datasetItems.length; i += chunkSize) {
+          const chunk = datasetItems.slice(i, i + chunkSize);
+          await supabase.from('dataset_items').insert(chunk);
+        }
+      }
+    }
 
     // 1. Create endpoint in database
     const { data: endpoint, error: endpointError } = await supabase
@@ -927,7 +984,8 @@ app.post('/api/create-from-dataset', async (req, res) => {
         project_name: project_name,
         description: description || `Dataset API for ${api_name}`,
         schema: schema,
-        published: false
+        published: false,
+        dataset_id: finalDatasetId // Vincular al dataset si existe
       })
       .select()
       .single();
@@ -1011,6 +1069,8 @@ app.post('/api/create-from-dataset', async (req, res) => {
       success: true,
       endpoint: endpoint,
       itemsImported: data.length,
+      datasetSaved: !!finalDatasetId,
+      datasetId: finalDatasetId,
       message: 'API created successfully from dataset'
     });
 
