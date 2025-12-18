@@ -832,10 +832,12 @@ Provide usage examples..." style="min-height: 400px; font-family: 'Monaco', mono
         async function cargarEndpoints() {
             try {
                 console.log('📡 Loading endpoints...');
-                const { data, error } = await supabase
-                    .from('endpoints')
-                    .select('*')
-                    .order('created_at', { ascending: false }); // Orden por fecha de creación
+                
+                // Primero intentar con created_at, si falla usar id
+                let query = supabase.from('endpoints').select('*');
+                
+                // Intentar ordenar por created_at, si no existe la columna caerá en el catch
+                const { data, error } = await query.order('id', { ascending: false });
                 
                 console.log('📊 Endpoints data:', data);
                 console.log('❌ Error:', error);
