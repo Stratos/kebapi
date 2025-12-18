@@ -908,7 +908,7 @@ Provide usage examples..." style="min-height: 400px; font-family: 'Monaco', mono
                 console.error('Error loading endpoints:', err);
             }
         }
-        }
+        
 
         async function togglePublish(endpointId, publish) { if (!confirm(publish ? 'Publish to marketplace?' : 'Unpublish from marketplace?')) { return; } try { const { error } = await supabase.from('endpoints').update({ published: publish }).eq('id', endpointId); if (error) { alert('Error: ' + error.message); return; } await cargarEndpoints(); } catch (err) { alert('Error: ' + err.message); } }
         
