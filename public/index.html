@@ -718,6 +718,47 @@ Provide usage examples..." style="min-height: 400px; font-family: 'Monaco', mono
         let currentDataItems = [];
         let editingItemId = null;
 
+        // Hacer funciones de auth globales
+        window.signInWithGoogle = async function() { 
+            console.log('🔐 Attempting Google sign-in...');
+            console.log('Redirect URL:', window.location.origin);
+            
+            if (!window.supabase) {
+                alert('Supabase not loaded. Please refresh the page.');
+                return;
+            }
+            
+            try {
+                const { data, error } = await supabase.auth.signInWithOAuth({ 
+                    provider: 'google', 
+                    options: { 
+                        redirectTo: window.location.origin,
+                        queryParams: {
+                            access_type: 'offline',
+                            prompt: 'consent',
+                        }
+                    } 
+                });
+                
+                if (error) {
+                    console.error('❌ Google sign-in error:', error);
+                    alert('Error signing in with Google: ' + error.message);
+                } else {
+                    console.log('✅ OAuth redirect initiated');
+                }
+            } catch (err) {
+                console.error('❌ Exception during sign-in:', err);
+                alert('Error: ' + err.message);
+            }
+        };
+        
+        window.signOut = async function() { 
+            const { error } = await supabase.auth.signOut(); 
+            if (error) { 
+                alert('Error: ' + error.message); 
+            } 
+        };
+
         async function init() {
             const { data: { session } } = await supabase.auth.getSession();
             if (session) { currentUser = session.user; showApp(); } else { showAuth(); }
@@ -737,8 +778,6 @@ Provide usage examples..." style="min-height: 400px; font-family: 'Monaco', mono
             initDropZone(); // Inicializar drag & drop
             cargarEndpoints(); 
         }
-        async function signInWithGoogle() { const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } }); if (error) { alert('Error: ' + error.message); } }
-        async function signOut() { const { error } = await supabase.auth.signOut(); if (error) { alert('Error: ' + error.message); } }
         
         function showSection(section) {
             document.getElementById('generatorSection').classList.add('hidden');
