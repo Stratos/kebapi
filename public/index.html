@@ -183,6 +183,18 @@
         .dataset-meta { display: flex; gap: 16px; margin-bottom: 16px; font-size: 12px; color: #999; }
         .dataset-meta-item { display: flex; align-items: center; gap: 6px; }
         .dataset-actions { display: flex; gap: 8px; }
+        .api-card-new { background: white; border-radius: 16px; padding: 24px; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; }
+        .api-card-new:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .api-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+        .api-icon-new { width: 48px; height: 48px; background: #FFF3E0; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #FF5722; font-size: 20px; }
+        .api-badge-new { padding: 4px 8px; background: #f5f5f5; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #666; }
+        .api-title-new { font-size: 18px; font-weight: 500; margin-bottom: 8px; }
+        .api-description-new { font-size: 13px; color: #666; margin-bottom: 16px; line-height: 1.5; }
+        .api-meta-new { display: flex; gap: 16px; margin-bottom: 12px; font-size: 12px; color: #999; }
+        .api-meta-item-new { display: flex; align-items: center; gap: 6px; }
+        .api-url-preview { background: #f5f5f5; border-radius: 8px; padding: 10px 12px; margin-bottom: 16px; }
+        .api-url-preview code { font-size: 11px; color: #666; word-break: break-all; }
+        .api-actions-new { display: flex; gap: 8px; }
     </style>
 </head>
 <body>
@@ -385,11 +397,11 @@
                     <div class="container">
                         <div class="section-header">
                             <h2 class="section-title">APIs<span class="section-count" id="apiCount">0</span></h2>
-                            <p class="section-description">All your generated endpoints grouped by project with full CRUD operations.</p>
+                            <p class="section-description">All your generated endpoints with full CRUD operations, ordered by creation date.</p>
                         </div>
 
-                        <div id="endpointsList"></div>
-                        <div id="noEndpoints" class="empty-state">
+                        <div id="endpointsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 24px;"></div>
+                        <div id="noEndpoints" class="empty-state hidden">
                             <h3 class="empty-title">No APIs yet</h3>
                             <p class="empty-description">Create your first API using the generator</p>
                         </div>
@@ -780,53 +792,109 @@ Provide usage examples..." style="min-height: 400px; font-family: 'Monaco', mono
 
         async function cargarEndpoints() {
             try {
-                const { data, error } = await supabase.from('endpoints').select('*').order('project_name', { ascending: true }).order('createdAt', { ascending: false });
-                const list = document.getElementById('endpointsList'); const noEndpoints = document.getElementById('noEndpoints'); const apiCount = document.getElementById('apiCount'); const statsNumber = document.getElementById('statsNumber');
+                const { data, error } = await supabase
+                    .from('endpoints')
+                    .select('*')
+                    .order('created_at', { ascending: false }); // Orden por fecha de creación
+                
+                const list = document.getElementById('endpointsList');
+                const noEndpoints = document.getElementById('noEndpoints');
+                const apiCount = document.getElementById('apiCount');
+                const statsNumber = document.getElementById('statsNumber');
+                
                 if (error) throw error;
+                
                 if (data && data.length > 0) {
-                    noEndpoints.classList.add('hidden'); apiCount.textContent = data.length; statsNumber.textContent = data.length;
-                    endpoints.clear(); data.forEach(ep => endpoints.set(ep.id, ep));
+                    noEndpoints.classList.add('hidden');
+                    apiCount.textContent = data.length;
+                    statsNumber.textContent = data.length;
+                    endpoints.clear();
+                    data.forEach(ep => endpoints.set(ep.id, ep));
                     
-                    // Agrupar por proyecto
-                    const grouped = data.reduce((acc, ep) => {
-                        const project = ep.project_name || 'default';
-                        if (!acc[project]) acc[project] = [];
-                        acc[project].push(ep);
-                        return acc;
-                    }, {});
-                    
-                    list.innerHTML = Object.entries(grouped).map(([project, eps]) => `
-                        <div class="project-group">
-                            <div class="project-header">
-                                <h3 class="project-name">${project}</h3>
-                                <span class="project-badge">${eps.length} ${eps.length === 1 ? 'API' : 'APIs'}</span>
+                    // Renderizar cards estilo dataset
+                    list.innerHTML = data.map(ep => {
+                        const fullUrl = `${API_URL}/api/${ep.project_name}${ep.path}`;
+                        const createdDate = new Date(ep.created_at).toLocaleDateString();
+                        const apiName = ep.path.replace('/', '');
+                        
+                        return `
+                            <div class="api-card-new" onclick="openEditAPI('${ep.id}')">
+                                <div class="api-card-header">
+                                    <div class="api-icon-new">
+                                        <i class="fas fa-plug"></i>
+                                    </div>
+                                    <div style="display: flex; gap: 8px;">
+                                        <div class="api-badge-new">${ep.project_name}</div>
+                                        ${ep.published ? '<div class="api-badge-new" style="background: #4CAF50; color: white;"><i class="fas fa-globe" style="font-size: 9px;"></i> Public</div>' : ''}
+                                    </div>
+                                </div>
+                                <h3 class="api-title-new">${apiName}</h3>
+                                <p class="api-description-new">${ep.description}</p>
+                                <div class="api-meta-new">
+                                    <div class="api-meta-item-new">
+                                        <i class="fas fa-code"></i>
+                                        <span>${ep.method}</span>
+                                    </div>
+                                    <div class="api-meta-item-new">
+                                        <i class="fas fa-calendar"></i>
+                                        <span>${createdDate}</span>
+                                    </div>
+                                    ${ep.dataset_id ? '<div class="api-meta-item-new" style="color: #FF5722;"><i class="fas fa-database"></i><span>Dataset</span></div>' : ''}
+                                </div>
+                                <div class="api-url-preview">
+                                    <code>${fullUrl}</code>
+                                </div>
+                                <div class="api-actions-new" onclick="event.stopPropagation()">
+                                    ${ep.published 
+                                        ? '<button class="btn-secondary" onclick="togglePublish(\'' + ep.id + '\', false)" style="flex: 1; padding: 10px;"><i class="fas fa-eye-slash"></i> Unpublish</button>'
+                                        : '<button class="btn-primary" onclick="togglePublish(\'' + ep.id + '\', true)" style="flex: 1; padding: 10px;"><i class="fas fa-globe"></i> Publish</button>'
+                                    }
+                                    <button class="btn-secondary" onclick="window.open('/api-docs.html?project=${ep.project_name}&endpoint=${apiName}', '_blank')" style="padding: 10px 16px;" title="View docs">
+                                        <i class="fas fa-book"></i>
+                                    </button>
+                                    <button class="btn-secondary" onclick="deleteEndpoint('${ep.id}')" style="padding: 10px 16px;" title="Delete API">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="endpoints-grid">
-                                ${eps.map(ep => {
-                                    const fullUrl = `${API_URL}/api/${ep.project_name}${ep.path}`;
-                                    const publishBtn = ep.published ? `<button class="btn-action btn-unpublish" onclick="togglePublish('${ep.id}', false)"><i class="fas fa-eye-slash"></i> Unpublish</button>` : `<button class="btn-action btn-publish" onclick="togglePublish('${ep.id}', true)"><i class="fas fa-globe"></i> Publish</button>`;
-                                    return `
-                                        <div class="endpoint-card" onclick="openEditAPI('${ep.id}')">
-                                            <div class="endpoint-method">${ep.method}</div>
-                                            <div class="endpoint-path">${ep.path}</div>
-                                            <div class="endpoint-description">${ep.description}</div>
-                                            <div class="endpoint-actions" onclick="event.stopPropagation()">
-                                                ${publishBtn}
-                                            </div>
-                                            <div class="endpoint-card-arrow">
-                                                <i class="fas fa-arrow-right"></i>
-                                            </div>
-                                        </div>
-                                    `;
-                                }).join('')}
-                            </div>
-                        </div>
-                    `).join('');
-                } else { noEndpoints.classList.remove('hidden'); apiCount.textContent = '0'; statsNumber.textContent = '0'; list.innerHTML = ''; }
-            } catch (err) { console.error('Error loading endpoints:', err); }
+                        `;
+                    }).join('');
+                } else {
+                    noEndpoints.classList.remove('hidden');
+                    apiCount.textContent = '0';
+                    statsNumber.textContent = '0';
+                    list.innerHTML = '';
+                }
+            } catch (err) {
+                console.error('Error loading endpoints:', err);
+            }
+        }
         }
 
         async function togglePublish(endpointId, publish) { if (!confirm(publish ? 'Publish to marketplace?' : 'Unpublish from marketplace?')) { return; } try { const { error } = await supabase.from('endpoints').update({ published: publish }).eq('id', endpointId); if (error) { alert('Error: ' + error.message); return; } await cargarEndpoints(); } catch (err) { alert('Error: ' + err.message); } }
+        
+        async function deleteEndpoint(endpointId) {
+            const endpoint = endpoints.get(endpointId);
+            if (!endpoint) return;
+            
+            if (!confirm(`Delete API "${endpoint.path}"?\n\nThis will delete the endpoint and all its data items.`)) {
+                return;
+            }
+            
+            try {
+                const { error } = await supabase
+                    .from('endpoints')
+                    .delete()
+                    .eq('id', endpointId);
+                
+                if (error) throw error;
+                
+                await cargarEndpoints();
+            } catch (err) {
+                alert('Error deleting endpoint: ' + err.message);
+            }
+        }
+        
         async function openDataManager(endpointId) { const endpoint = endpoints.get(endpointId); if (!endpoint || !endpoint.schema) return; currentDataEndpoint = endpoint; document.getElementById('dataManagerTitle').textContent = 'Manage Data'; document.getElementById('dataManagerSubtitle').textContent = endpoint.description; document.getElementById('dataManagerModal').classList.remove('hidden'); loadDataItems(); }
         async function loadDataItems() { const loading = document.getElementById('dataTableLoading'); const wrapper = document.getElementById('dataTableWrapper'); const empty = document.getElementById('dataManagerEmpty'); loading.classList.remove('hidden'); wrapper.classList.add('hidden'); empty.classList.add('hidden'); const { data, error } = await supabase.from('endpoint_items').select('*').eq('endpoint_id', currentDataEndpoint.id).order('created_at', { ascending: false }); loading.classList.add('hidden'); if (error) { alert('Error: ' + error.message); return; } currentDataItems = data || []; if (currentDataItems.length === 0) { empty.classList.remove('hidden'); document.getElementById('dataCount').textContent = 'No items'; } else { wrapper.classList.remove('hidden'); document.getElementById('dataCount').textContent = `${currentDataItems.length} item${currentDataItems.length !== 1 ? 's' : ''}`; renderDataTable(); } }
         function renderDataTable() { const thead = document.getElementById('dataManagerTableHead'); const tbody = document.getElementById('dataManagerTableBody'); const fields = currentDataEndpoint.schema?.fields || []; const sampleItem = currentDataItems[0]?.data || {}; const fieldNames = fields.length > 0 ? fields.map(f => f.name) : Object.keys(sampleItem); thead.innerHTML = `<tr>${fieldNames.map(field => `<th>${field}</th>`).join('')}<th style="width: 140px;">Actions</th></tr>`; tbody.innerHTML = currentDataItems.map(item => `<tr>${fieldNames.map(field => { const value = item.data[field]; const displayValue = typeof value === 'object' ? JSON.stringify(value) : (value !== undefined && value !== null ? value : '-'); const truncated = String(displayValue).length > 50 ? String(displayValue).substring(0, 50) + '...' : displayValue; return `<td title="${String(displayValue)}">${truncated}</td>`; }).join('')}<td><div style="display: flex; gap: 8px;"><button onclick="openEditItemModal('${item.id}')" class="btn-edit"><i class="fas fa-edit"></i></button><button onclick="deleteDataItem('${item.id}')" class="btn-delete"><i class="fas fa-trash"></i></button></div></td></tr>`).join(''); }
