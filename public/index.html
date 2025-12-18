@@ -831,19 +831,29 @@ Provide usage examples..." style="min-height: 400px; font-family: 'Monaco', mono
 
         async function cargarEndpoints() {
             try {
+                console.log('📡 Loading endpoints...');
                 const { data, error } = await supabase
                     .from('endpoints')
                     .select('*')
                     .order('created_at', { ascending: false }); // Orden por fecha de creación
+                
+                console.log('📊 Endpoints data:', data);
+                console.log('❌ Error:', error);
                 
                 const list = document.getElementById('endpointsList');
                 const noEndpoints = document.getElementById('noEndpoints');
                 const apiCount = document.getElementById('apiCount');
                 const statsNumber = document.getElementById('statsNumber');
                 
-                if (error) throw error;
+                if (error) {
+                    console.error('❌ Supabase error:', error);
+                    throw error;
+                }
+                
+                console.log('📈 Number of endpoints:', data?.length);
                 
                 if (data && data.length > 0) {
+                    console.log('✅ Rendering', data.length, 'API cards');
                     noEndpoints.classList.add('hidden');
                     apiCount.textContent = data.length;
                     statsNumber.textContent = data.length;
@@ -853,8 +863,10 @@ Provide usage examples..." style="min-height: 400px; font-family: 'Monaco', mono
                     // Renderizar cards estilo dataset
                     list.innerHTML = data.map(ep => {
                         const fullUrl = `${API_URL}/api/${ep.project_name}${ep.path}`;
-                        const createdDate = new Date(ep.created_at).toLocaleDateString();
+                        const createdDate = ep.created_at ? new Date(ep.created_at).toLocaleDateString() : 'N/A';
                         const apiName = ep.path.replace('/', '');
+                        
+                        console.log('🔧 Rendering card for:', apiName);
                         
                         return `
                             <div class="api-card-new" onclick="openEditAPI('${ep.id}')">
@@ -898,17 +910,19 @@ Provide usage examples..." style="min-height: 400px; font-family: 'Monaco', mono
                             </div>
                         `;
                     }).join('');
+                    
+                    console.log('✅ HTML generated, length:', list.innerHTML.length);
                 } else {
+                    console.log('ℹ️ No endpoints found');
                     noEndpoints.classList.remove('hidden');
                     apiCount.textContent = '0';
                     statsNumber.textContent = '0';
                     list.innerHTML = '';
                 }
             } catch (err) {
-                console.error('Error loading endpoints:', err);
+                console.error('❌ Error loading endpoints:', err);
             }
         }
-        
 
         async function togglePublish(endpointId, publish) { if (!confirm(publish ? 'Publish to marketplace?' : 'Unpublish from marketplace?')) { return; } try { const { error } = await supabase.from('endpoints').update({ published: publish }).eq('id', endpointId); if (error) { alert('Error: ' + error.message); return; } await cargarEndpoints(); } catch (err) { alert('Error: ' + err.message); } }
         
